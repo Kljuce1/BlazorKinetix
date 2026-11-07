@@ -1,6 +1,0 @@
-BlazorKinetix
-Concepto: Derivado de kinetics (cinética / movimiento). Transmite la idea de componentes fluidos, rápidos, dinámicos y responsivos.
-
-Espacio de nombres sugerido: BlazorKinetix.Components / BlazorKinetix.Core
-
-Paquete NuGet: BlazorKinetix
