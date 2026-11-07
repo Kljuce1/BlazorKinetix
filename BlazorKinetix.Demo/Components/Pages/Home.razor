@@ -1,8 +1,19 @@
 @page "/"
 @rendermode InteractiveServer
 @inject KinetixTexts Texts
+@inject NavigationManager Navigation
 
 <PageTitle>@T("Demo.Home.PageTitle")</PageTitle>
+<HeadContent>
+    <meta name="description" content="@T("Demo.Hero.Description")" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="@T("Demo.Hero.Title")" />
+    <meta property="og:description" content="@T("Demo.Hero.Description")" />
+    <meta property="og:image" content="@BannerUrl" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+</HeadContent>
 <section class="hero">
     <div>
         <span class="eyebrow">@T("Demo.Hero.Eyebrow")</span>
@@ -17,6 +28,8 @@
         <small>@Status</small>
     </div>
 </section>
+
+<ControlIndex />
 
 <section class="section" id="inputs">
     <div class="section-heading"><span class="eyebrow">@T("Demo.Input.Eyebrow")</span><div><h2>InputBox</h2><p>@T("Demo.Input.Description")</p></div></div>
@@ -86,6 +99,10 @@
     <p class="demo-status" role="status">@Status</p>
 </section>
 
+<DateExamples OnShowCode="ShowCode" />
+
+<NavigationExamples OnShowCode="ShowCode" />
+
 <section class="section" id="tooltip">
     <div class="section-heading"><span class="eyebrow">@T("Demo.Tooltip.Eyebrow")</span><div><h2>Tooltip</h2><p>@T("Demo.Tooltip.Description")</p></div></div>
     <div class="card tooltip-card"><Tooltip Text="@T("Demo.Tooltip.Text")"><button class="hint-button" type="button">@T("Demo.Tooltip.Action")</button></Tooltip><p>@T("Demo.Tooltip.CardDescription")</p><button class="view-code" type="button" @onclick='() => ShowCode("tooltip")'>@T("Demo.Code.View")</button></div>
@@ -111,6 +128,7 @@
     private string statusKey = "Demo.Status.Initial";
     private string Status => Texts.Get(statusKey, new Dictionary<string, string> { ["promo"] = promo ?? "" });
     private string T(string key) => Texts.Get(key);
+    private string BannerUrl => new Uri(new Uri(Navigation.BaseUri), "images/Banner_1200x630.jpg").AbsoluteUri;
 
     private void ShowCode(string key)
     {

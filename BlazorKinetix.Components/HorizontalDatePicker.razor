@@ -1,0 +1,85 @@
+@using BlazorKinetix.Core
+@using System.Globalization
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject KinetixTexts Texts
+
+<div class="bk-horizontal-date @CssClass">
+    @if (!string.IsNullOrWhiteSpace(Label)) { <label>@Label</label> }
+    <div class="bk-horizontal-date-frame">
+        <button type="button" class="bk-horizontal-date-arrow" aria-label="@Texts.Get("Date.PreviousDays")" @onclick="() => Scroll(-1)">@if (PreviousIcon is not null) { @PreviousIcon } else if (!string.IsNullOrWhiteSpace(PreviousIconClass)) { <i class="@PreviousIconClass" aria-hidden="true"></i> } else { <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg> }</button>
+        <div class="bk-horizontal-date-track" @ref="track" role="group" aria-label="@(Label ?? Texts.Get("Date.Choose"))">
+            @foreach (var date in Days)
+            {
+                var selectable = DateSelectionRules.IsSelectable(date, MinDate, MaxDate, DisabledDates);
+                var message = DateSelectionRules.DisabledMessage(date, DisabledDates);
+                var detail = Availability?.FirstOrDefault(item => item.Date == date)?.Text;
+                <button type="button" class="bk-horizontal-date-day @(date == Value ? "is-selected" : "")" aria-pressed="@(date == Value ? "true" : "false")" aria-disabled="@(selectable ? "false" : "true")" aria-label="@DayLabel(date, detail, message)" title="@message" @onclick="() => Select(date)">
+                    <span class="bk-horizontal-date-weekday">@date.ToString("ddd", CultureInfo.CurrentCulture)</span>
+                    <strong>@date.ToString("dd/MM", CultureInfo.CurrentCulture)</strong>
+                    @if (DayContent is not null) { <small>@DayContent(date)</small> }
+                    else if (!string.IsNullOrWhiteSpace(detail)) { <small>@detail</small> }
+                </button>
+            }
+        </div>
+        <button type="button" class="bk-horizontal-date-arrow" aria-label="@Texts.Get("Date.NextDays")" @onclick="() => Scroll(1)">@if (NextIcon is not null) { @NextIcon } else if (!string.IsNullOrWhiteSpace(NextIconClass)) { <i class="@NextIconClass" aria-hidden="true"></i> } else { <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg> }</button>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(activeMessage)) { <span class="bk-horizontal-date-message" role="status">@activeMessage</span> }
+</div>
+
+@code {
+    /// <summary>Gets or sets the selected date.</summary>
+    [Parameter] public DateOnly? Value { get; set; }
+    /// <summary>Runs when the selected date changes.</summary>
+    [Parameter] public EventCallback<DateOnly?> ValueChanged { get; set; }
+    /// <summary>Sets the first date shown.</summary>
+    [Parameter] public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    /// <summary>Sets the last date shown.</summary>
+    [Parameter] public DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(9));
+    /// <summary>Sets the earliest selectable date.</summary>
+    [Parameter] public DateOnly? MinDate { get; set; }
+    /// <summary>Sets the latest selectable date.</summary>
+    [Parameter] public DateOnly? MaxDate { get; set; }
+    /// <summary>Sets dates that cannot be selected.</summary>
+    [Parameter] public IReadOnlyCollection<DisabledDate>? DisabledDates { get; set; }
+    /// <summary>Displays additional text for dates.</summary>
+    [Parameter] public IReadOnlyCollection<DateAvailability>? Availability { get; set; }
+    /// <summary>Replaces the content below each day.</summary>
+    [Parameter] public RenderFragment<DateOnly>? DayContent { get; set; }
+    /// <summary>Displays a label above the picker.</summary>
+    [Parameter] public string? Label { get; set; }
+    /// <summary>Displays custom markup for the previous days icon.</summary>
+    [Parameter] public RenderFragment? PreviousIcon { get; set; }
+    /// <summary>Uses an icon class from the host application for previous days.</summary>
+    [Parameter] public string? PreviousIconClass { get; set; }
+    /// <summary>Displays custom markup for the next days icon.</summary>
+    [Parameter] public RenderFragment? NextIcon { get; set; }
+    /// <summary>Uses an icon class from the host application for next days.</summary>
+    [Parameter] public string? NextIconClass { get; set; }
+    /// <summary>Adds CSS classes to the picker.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private ElementReference track;
+    private IJSObjectReference? module;
+    private string? activeMessage;
+    private IEnumerable<DateOnly> Days => EndDate >= StartDate ? Enumerable.Range(0, EndDate.DayNumber - StartDate.DayNumber + 1).Select(StartDate.AddDays) : [];
+    private string DayLabel(DateOnly date, string? detail, string? message) => string.Join(", ", new[] { date.ToString("D", CultureInfo.CurrentCulture), detail, message }.Where(text => !string.IsNullOrWhiteSpace(text)));
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Value is { } date && (!DateSelectionRules.IsSelectable(date, MinDate, MaxDate, DisabledDates) || date < StartDate || date > EndDate)) await ValueChanged.InvokeAsync(null);
+    }
+    private async Task Select(DateOnly date)
+    {
+        if (!DateSelectionRules.IsSelectable(date, MinDate, MaxDate, DisabledDates)) { activeMessage = DateSelectionRules.DisabledMessage(date, DisabledDates); return; }
+        activeMessage = null;
+        await ValueChanged.InvokeAsync(date);
+    }
+    private async Task Scroll(int direction)
+    {
+        module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorKinetix/horizontal-date-picker.js");
+        await module.InvokeVoidAsync("scrollDays", track, direction);
+    }
+    /// <summary>Releases the scrolling module.</summary>
+    public async ValueTask DisposeAsync() { if (module is not null) { try { await module.DisposeAsync(); } catch (JSDisconnectedException) { } } }
+}

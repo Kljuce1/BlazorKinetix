@@ -1,0 +1,55 @@
+@using BlazorKinetix.Core
+@using System.Globalization
+@inject KinetixTexts Texts
+
+<div class="bk-time-slots" role="group" aria-label="@Texts.Get("Time.Choose")">
+    @foreach (var slot in Slots)
+    {
+        var time = slot.Time;
+        var blocked = DisabledTimes?.FirstOrDefault(item => item.Time == time);
+        var unavailable = !slot.IsAvailable || blocked is not null;
+        var message = slot.Message ?? blocked?.Message;
+        <button type="button" class="bk-time-slot @(time == Value ? "is-selected" : "")" aria-pressed="@(time == Value ? "true" : "false")" aria-disabled="@(unavailable ? "true" : "false")" aria-label="@(message is null ? time.ToString(TimeFormat, CultureInfo.CurrentCulture) : $"{time.ToString(TimeFormat, CultureInfo.CurrentCulture)}, {message}")" title="@message" @onclick="() => Select(time, unavailable, message)">@time.ToString(TimeFormat, CultureInfo.CurrentCulture)</button>
+    }
+    @if (!Slots.Any()) { <p class="bk-time-message">@Texts.Get("Time.NoSlots")</p> }
+    @if (!string.IsNullOrWhiteSpace(activeMessage)) { <p class="bk-time-message" role="status">@activeMessage</p> }
+</div>
+
+@code {
+    /// <summary>Marks the selected time.</summary>
+    [Parameter] public TimeOnly? Value { get; set; }
+    /// <summary>Runs when an available time is chosen.</summary>
+    [Parameter] public EventCallback<TimeOnly> TimeClicked { get; set; }
+    /// <summary>Sets the earliest time shown.</summary>
+    [Parameter] public TimeOnly MinTime { get; set; } = new(0, 0);
+    /// <summary>Sets the latest time shown.</summary>
+    [Parameter] public TimeOnly MaxTime { get; set; } = new(23, 59);
+    /// <summary>Sets the interval between times in minutes.</summary>
+    [Parameter] public int StepMinutes { get; set; } = 30;
+    /// <summary>Displays explicit time options instead of generated intervals.</summary>
+    [Parameter] public IReadOnlyCollection<TimeSlotItem>? Items { get; set; }
+    /// <summary>Sets times that cannot be selected.</summary>
+    [Parameter] public IReadOnlyCollection<DisabledTime>? DisabledTimes { get; set; }
+    /// <summary>Sets the time display format.</summary>
+    [Parameter] public string TimeFormat { get; set; } = "t";
+
+    private IEnumerable<TimeSlotItem> Slots
+    {
+        get
+        {
+            if (Items is not null)
+            {
+                foreach (var item in Items.Where(item => item.Time >= MinTime && item.Time <= MaxTime).OrderBy(item => item.Time).DistinctBy(item => item.Time)) yield return item;
+                yield break;
+            }
+            var step = Math.Clamp(StepMinutes, 1, 1440);
+            for (var minutes = 0; minutes < 1440; minutes += step)
+            {
+                var time = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(minutes));
+                if (time >= MinTime && time <= MaxTime) yield return new TimeSlotItem(time);
+            }
+        }
+    }
+    private string? activeMessage;
+    private async Task Select(TimeOnly time, bool blocked, string? message) { if (blocked) { activeMessage = message; return; } activeMessage = null; await TimeClicked.InvokeAsync(time); }
+}

@@ -10,44 +10,94 @@
 <div class="bk-input bk-input--@Appearance.ToString().ToLowerInvariant() bk-input--@Color.ToString().ToLowerInvariant() @(HasError ? "is-invalid" : "") @(Disabled ? "is-disabled" : "") @CssClass">
     @if (LabelMode == InputBoxLabelMode.Above && !string.IsNullOrWhiteSpace(Title))
     {
-        <label class="bk-label" for="@inputId">@Title @if (Required) { <span class="bk-required" aria-hidden="true">*</span> }</label>
-    }
-    <div class="bk-control @(LabelMode == InputBoxLabelMode.Floating ? "bk-floating" : "") @(IsFloating ? "has-value" : "")">
-        @if (Icon is not null || !string.IsNullOrWhiteSpace(IconClass))
-        {
-            <span class="bk-leading" aria-hidden="true">@if (Icon is not null) { @Icon } else { <i class="@IconClass"></i> }</span>
+        <label class="bk-label" for="@inputId">
+            @Title @if (Required) {
+            <span class="bk-required" aria-hidden="true">*</span>
         }
-        <input id="@inputId" name="@Name" type="@HtmlInputType" value="@rawText" placeholder="@(LabelMode == InputBoxLabelMode.Floating ? " " : Placeholder)"
-               inputmode="@InputMode" autocomplete="@Autocomplete" maxlength="@MaxLength" minlength="@MinLength" required="@(NativeValidation && Required)" autofocus="@AutoFocus" disabled="@Disabled" readonly="@ReadOnly"
-               aria-label="@(string.IsNullOrWhiteSpace(Title) ? Placeholder : null)" aria-required="@Required" aria-invalid="@HasError" aria-describedby="@DescriptionIds"
-               @oninput="HandleInput" @onblur="HandleBlur" />
-        @if (LabelMode == InputBoxLabelMode.Floating && !string.IsNullOrWhiteSpace(Title))
-        {
-            <label class="bk-float-label" for="@inputId">@Title @if (Required) { <span aria-hidden="true">*</span> }</label>
-        }
-        @if (Kind == InputBoxKind.Password)
-        {
-            <button class="bk-eye" type="button" disabled="@Disabled" aria-label="@(passwordVisible ? Texts.Get("Input.HidePassword") : Texts.Get("Input.ShowPassword"))" aria-pressed="@passwordVisible" @onclick="TogglePassword">
-                @if (passwordVisible && HidePasswordIcon is not null) { @HidePasswordIcon }
-                else if (!passwordVisible && ShowPasswordIcon is not null) { @ShowPasswordIcon }
-                else
-                {
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>@if (!passwordVisible) { <path d="m3 3 18 18"/> }</svg>
-                }
-            </button>
-        }
-        @if (Action is not null) { <span class="bk-action">@Action</span> }
-    </div>
-    @if (!string.IsNullOrWhiteSpace(HelpText)) { <small class="bk-help" id="@helpId">@HelpText</small> }
-    @if (ShowCharacterCount && MaxLength is { } limit && Kind == InputBoxKind.Text) { <small class="bk-count">@rawText.Length / @limit</small> }
-    @if (Kind == InputBoxKind.Password && ShowPasswordStrength && rawText.Length > 0)
+    </label>
+}
+<div class="bk-control @(LabelMode == InputBoxLabelMode.Floating ? "bk-floating" : "") @(IsFloating ? "has-value" : "")">
+    @if (Icon is not null || !string.IsNullOrWhiteSpace(IconClass))
     {
-        <div class="bk-strength" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@StrengthScore" aria-label="@Texts.Get("Input.Strength", new Dictionary<string,string> { ["strength"] = StrengthLabel })">
-            <span class="bk-strength-fill" style="width:@StrengthScore%"></span>
-        </div>
-        <small class="bk-help">@Texts.Get("Input.Strength", new Dictionary<string,string> { ["strength"] = StrengthLabel })</small>
+        <span class="bk-leading" aria-hidden="true">
+            @if (Icon is not null)
+            {
+                @Icon
+            }
+            else
+            {
+
+                <i class="@IconClass"></i>
+            }
+        </span>
     }
-    @if (HasError) { <small class="bk-error" id="@errorId" role="alert">@DisplayedError</small> }
+    <input id="@inputId" name="@Name" type="@HtmlInputType" value="@rawText" placeholder="@(LabelMode == InputBoxLabelMode.Floating ? " " : Placeholder)"
+           inputmode="@InputMode" autocomplete="@Autocomplete" maxlength="@MaxLength" minlength="@MinLength" required="@(NativeValidation && Required)" autofocus="@AutoFocus" disabled="@Disabled" readonly="@ReadOnly"
+           aria-label="@(string.IsNullOrWhiteSpace(Title) ? Placeholder : null)" aria-required="@Required" aria-invalid="@HasError" aria-describedby="@DescriptionIds"
+           @oninput="HandleInput" @onblur="HandleBlur" />
+    @if (LabelMode == InputBoxLabelMode.Floating && !string.IsNullOrWhiteSpace(Title))
+    {
+        <label class="bk-float-label" for="@inputId">
+            @Title @if (Required) {
+            <span aria-hidden="true">*</span>
+        }
+    </label>
+}
+@if (Kind == InputBoxKind.Password)
+{
+    <button class="bk-eye" type="button" disabled="@Disabled" aria-label="@(passwordVisible ? Texts.Get("Input.HidePassword") : Texts.Get("Input.ShowPassword"))" aria-pressed="@passwordVisible" @onclick="TogglePassword">
+        @if (passwordVisible && HidePasswordIcon is not null)
+        {
+            @HidePasswordIcon
+        }
+        else if (!passwordVisible && ShowPasswordIcon is not null)
+        {
+
+            @ShowPasswordIcon
+        }
+        else if (passwordVisible && !string.IsNullOrWhiteSpace(HidePasswordIconClass))
+        {
+            <i class="@HidePasswordIconClass" aria-hidden="true"></i>
+        }
+        else if (!passwordVisible && !string.IsNullOrWhiteSpace(ShowPasswordIconClass))
+        {
+            <i class="@ShowPasswordIconClass" aria-hidden="true"></i>
+        }
+        else
+        {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
+                <circle cx="12" cy="12" r="3" />@if (!passwordVisible) {
+                <path d="m3 3 18 18" />
+            }
+        </svg>
+}
+</button>
+}
+        @if (Action is not null)
+{
+    <span class="bk-action">@Action</span>
+}
+</div>
+    @if (!string.IsNullOrWhiteSpace(HelpText))
+{
+    <small class="bk-help" id="@helpId">@HelpText</small>
+}
+@if (ShowCharacterCount && MaxLength is { } limit && Kind == InputBoxKind.Text)
+{
+    <small class="bk-count">@rawText.Length / @limit</small>
+}
+@if (Kind == InputBoxKind.Password && ShowPasswordStrength && rawText.Length > 0)
+{
+    <div class="bk-strength" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@StrengthScore" aria-label="@Texts.Get("Input.Strength", new Dictionary<string, string> { ["strength"] = StrengthLabel })">
+        <span class="bk-strength-fill" style="width:@StrengthScore%"></span>
+    </div>
+    <small class="bk-help">@Texts.Get("Input.Strength", new Dictionary<string, string> { ["strength"] = StrengthLabel })</small>
+}
+@if (HasError)
+{
+    <small class="bk-error" id="@errorId" role="alert">@DisplayedError</small>
+}
 </div>
 
 @code {
@@ -88,6 +138,10 @@
     [Parameter] public RenderFragment? ShowPasswordIcon { get; set; }
     /// <summary>Overrides the hide-password icon.</summary>
     [Parameter] public RenderFragment? HidePasswordIcon { get; set; }
+    /// <summary>Uses an icon class from the host application to show a password.</summary>
+    [Parameter] public string? ShowPasswordIconClass { get; set; }
+    /// <summary>Uses an icon class from the host application to hide a password.</summary>
+    [Parameter] public string? HidePasswordIconClass { get; set; }
     /// <summary>Sets browser autocomplete.</summary>
     [Parameter] public string? Autocomplete { get; set; }
     /// <summary>Requires a nonempty value.</summary>
@@ -264,10 +318,10 @@
         get
         {
             var items = new List<(string, bool)>();
-            if (MinimumPasswordLength > 0) items.Add((Texts.Get("Input.PasswordLength", new Dictionary<string,string> { ["min"] = MinimumPasswordLength.ToString() }), rawText.Length >= MinimumPasswordLength));
-            if (MinimumUppercase > 0) items.Add((Texts.Get("Input.PasswordUppercase", new Dictionary<string,string> { ["min"] = MinimumUppercase.ToString() }), rawText.Count(char.IsUpper) >= MinimumUppercase));
-            if (MinimumDigits > 0) items.Add((Texts.Get("Input.PasswordDigits", new Dictionary<string,string> { ["min"] = MinimumDigits.ToString() }), rawText.Count(char.IsDigit) >= MinimumDigits));
-            if (MinimumSpecial > 0) items.Add((Texts.Get("Input.PasswordSpecial", new Dictionary<string,string> { ["min"] = MinimumSpecial.ToString() }), rawText.Count(c => !char.IsLetterOrDigit(c) && !char.IsWhiteSpace(c)) >= MinimumSpecial));
+            if (MinimumPasswordLength > 0) items.Add((Texts.Get("Input.PasswordLength", new Dictionary<string, string> { ["min"] = MinimumPasswordLength.ToString() }), rawText.Length >= MinimumPasswordLength));
+            if (MinimumUppercase > 0) items.Add((Texts.Get("Input.PasswordUppercase", new Dictionary<string, string> { ["min"] = MinimumUppercase.ToString() }), rawText.Count(char.IsUpper) >= MinimumUppercase));
+            if (MinimumDigits > 0) items.Add((Texts.Get("Input.PasswordDigits", new Dictionary<string, string> { ["min"] = MinimumDigits.ToString() }), rawText.Count(char.IsDigit) >= MinimumDigits));
+            if (MinimumSpecial > 0) items.Add((Texts.Get("Input.PasswordSpecial", new Dictionary<string, string> { ["min"] = MinimumSpecial.ToString() }), rawText.Count(c => !char.IsLetterOrDigit(c) && !char.IsWhiteSpace(c)) >= MinimumSpecial));
             return items;
         }
     }

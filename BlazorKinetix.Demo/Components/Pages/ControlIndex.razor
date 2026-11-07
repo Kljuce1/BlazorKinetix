@@ -1,0 +1,41 @@
+@inject KinetixTexts Texts
+
+<section class="control-index" id="catalog" aria-label="@T("Demo.Index.Title")">
+    <div class="control-index-heading"><div><span class="eyebrow">@T("Demo.Index.Eyebrow")</span><h2>@T("Demo.Index.Title")</h2><p>@T("Demo.Index.Description")</p></div><input type="search" value="@query" @oninput="Search" placeholder="@T("Demo.Index.Search")" aria-label="@T("Demo.Index.Search")" /></div>
+    <div class="control-index-filters" role="group" aria-label="@T("Demo.Index.Categories")">
+        <button type="button" aria-pressed="@(category is null ? "true" : "false")" @onclick="() => category = null">@T("Demo.Index.All")</button>
+        @foreach (var key in categories)
+        {
+            <button type="button" aria-pressed="@(category == key ? "true" : "false")" @onclick="() => category = key">@T(key)</button>
+        }
+    </div>
+    <div class="control-index-list">
+        @foreach (var item in Filtered)
+        {
+            <a href="@item.Href"><span>@T(item.CategoryKey)</span><strong>@item.Name</strong></a>
+        }
+    </div>
+    @if (!Filtered.Any()) { <p class="control-index-empty">@T("Demo.Index.Empty")</p> }
+</section>
+
+@code {
+    private string query = "";
+    private string? category;
+    private readonly string[] categories = ["Demo.Index.Fields", "Demo.Index.Actions", "Demo.Index.Feedback", "Demo.Index.Dates", "Demo.Index.Navigation"];
+    private string T(string key) => Texts.Get(key);
+    private void Search(ChangeEventArgs args) => query = args.Value?.ToString() ?? "";
+    private readonly (string Name, string Href, string CategoryKey)[] items =
+    [
+        ("InputBox", "#inputs", "Demo.Index.Fields"),
+        ("Button", "#buttons", "Demo.Index.Actions"),
+        ("Tooltip", "#tooltip", "Demo.Index.Feedback"),
+        ("Modal", "#modal", "Demo.Index.Feedback"),
+        ("HorizontalDatePicker", "#horizontal-date-picker", "Demo.Index.Dates"),
+        ("DatePicker", "#date-picker", "Demo.Index.Dates"),
+        ("DateRangePicker", "#date-range-picker", "Demo.Index.Dates"),
+        ("TimePicker", "#time-picker", "Demo.Index.Dates"),
+        ("DateTimePicker", "#date-time-picker", "Demo.Index.Dates")
+        ,("NavMenu", "#navigation", "Demo.Index.Navigation")
+    ];
+    private IEnumerable<(string Name, string Href, string CategoryKey)> Filtered => items.Where(item => (category is null || item.CategoryKey == category) && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) || T(item.CategoryKey).Contains(query, StringComparison.OrdinalIgnoreCase)));
+}

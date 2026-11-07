@@ -43,6 +43,42 @@
 &lt;/Modal&gt;</code></pre>
     <p>@T("Demo.Docs.ModalBody")</p>
 
+    <h2>HorizontalDatePicker · DatePicker · DateRangePicker</h2>
+    <pre><code>&lt;HorizontalDatePicker StartDate="@@today" EndDate="@@today.AddDays(13)"
+    DisabledDates="@@unavailable" Availability="@@fares"
+    @@bind-Value="departure" /&gt;
+
+&lt;DatePicker MinDate="@@today" DisabledDates="@@unavailable"
+    @@bind-Value="date" /&gt;
+
+&lt;DateRangePicker MinDate="@@today" @@bind-Value="range"
+    RangeChanged="Search" /&gt;</code></pre>
+    <h2>TimePicker · DateTimePicker</h2>
+    <pre><code>&lt;TimePicker StepMinutes="30" @@bind-Value="time" /&gt;
+&lt;TimePicker Items="@@timesFromDatabase" @@bind-Value="departureTime" /&gt;
+&lt;DateTimePicker MinDate="@@today" StepMinutes="30"
+    DisabledTimesForDate="TimesForDate" @@bind-Value="appointment" /&gt;
+&lt;DateTimePicker ItemsForDate="SlotsForDate"
+    @@bind-Value="appointment" /&gt;</code></pre>
+    <p>@T("Demo.Docs.DateBody")</p>
+    <p>@T("Demo.Docs.TimeItemsBody")</p>
+
+    <h2>NavMenu</h2>
+    <pre><code>&lt;NavMenu Items="@@menuItems" Title="Workspace"
+         @@bind-SelectedKey="selectedKey"
+         @@bind-IsCollapsed="collapsed" /&gt;
+
+@@code {
+    private string? selectedKey;
+    private bool collapsed;
+    private IReadOnlyList&lt;NavMenuItem&gt; menuItems = [
+        new() { Key = "home", Text = "Home", Href = "/" },
+        new() { Key = "reports", Text = "Reports",
+                IconClass = "fa-solid fa-chart-line" }
+    ];
+}</code></pre>
+    <p>@T("Demo.Docs.NavBody")</p>
+
     <h2>@T("Demo.Docs.Theme")</h2>
     <pre><code>:root {
   --bk-primary: #075b62;
@@ -50,6 +86,7 @@
   --bk-text: #243447;
   --bk-gradient-start: #7159ed;
   --bk-gradient-end: #20c4e2;
+  --bk-nav-accent: #6c4bc5;
 }</code></pre>
     <p>@T("Demo.Docs.ThemeBody")</p>
 </div>

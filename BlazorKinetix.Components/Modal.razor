@@ -8,11 +8,16 @@
     <div class="bk-modal-head">
         <h2 id="@titleId">@Title</h2>
         <button type="button" class="bk-modal-close" aria-label="@(CloseLabel ?? Texts.Get("Modal.Close"))" @onclick="CloseAsync">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 5 19 19M19 5 5 19" /></svg>
+            @if (CloseIcon is not null) { @CloseIcon }
+            else if (!string.IsNullOrWhiteSpace(CloseIconClass)) { <i class="@CloseIconClass" aria-hidden="true"></i> }
+            else { <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 5 19 19M19 5 5 19" /></svg> }
         </button>
     </div>
     <div class="bk-modal-body @BodyCssClass">@ChildContent</div>
-    @if (Footer is not null) { <div class="bk-modal-footer">@Footer</div> }
+    @if (Footer is not null)
+    {
+        <div class="bk-modal-footer">@Footer</div>
+    }
 </dialog>
 
 @code {
@@ -32,6 +37,10 @@
     [Parameter] public EventCallback OnClose { get; set; }
     /// <summary>Sets the accessible close button label.</summary>
     [Parameter] public string? CloseLabel { get; set; }
+    /// <summary>Displays custom markup in the close button.</summary>
+    [Parameter] public RenderFragment? CloseIcon { get; set; }
+    /// <summary>Uses an icon class from the host application in the close button.</summary>
+    [Parameter] public string? CloseIconClass { get; set; }
     /// <summary>Adds CSS classes to the dialog.</summary>
     [Parameter] public string? CssClass { get; set; }
     /// <summary>Adds CSS classes to the modal body.</summary>

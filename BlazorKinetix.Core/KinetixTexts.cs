@@ -34,7 +34,31 @@ public sealed class KinetixTexts
         ["Button.Hold"] = "Hold to confirm",
         ["Button.Slide"] = "Slide to confirm",
         ["Button.Success"] = "Done!",
-        ["Modal.Close"] = "Close"
+        ["Modal.Close"] = "Close",
+        ["NavMenu.Title"] = "Navigation",
+        ["NavMenu.Label"] = "Navigation menu",
+        ["NavMenu.MobileTrigger"] = "Menu",
+        ["NavMenu.Open"] = "Open menu",
+        ["NavMenu.Close"] = "Close menu",
+        ["NavMenu.Expand"] = "Expand menu",
+        ["NavMenu.Collapse"] = "Collapse menu",
+        ["Date.Calendar"] = "Calendar",
+        ["Date.Choose"] = "Choose a date",
+        ["Date.ChooseRange"] = "Choose a date range",
+        ["Date.ChooseStart"] = "Choose start date",
+        ["Date.ChooseEnd"] = "Choose end date",
+        ["Date.RangeBlocked"] = "The range includes an unavailable date.",
+        ["Date.PreviousMonth"] = "Previous month",
+        ["Date.NextMonth"] = "Next month",
+        ["Date.PreviousDays"] = "Previous days",
+        ["Date.NextDays"] = "Next days",
+        ["Date.Month"] = "Month",
+        ["Date.Year"] = "Year",
+        ["Date.Close"] = "Close calendar",
+        ["Time.Choose"] = "Choose a time",
+        ["Time.NoSlots"] = "No times available.",
+        ["DateTime.Choose"] = "Choose date and time",
+        ["DateTime.ChangeDate"] = "Change date"
     };
 
     /// <summary>Loads translations from a JSON object keyed by culture, then text key.</summary>

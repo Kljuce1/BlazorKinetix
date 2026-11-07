@@ -8,51 +8,86 @@
         <div class="bk-slide bk-button--@Color.ToString().ToLowerInvariant() @(busy ? "is-busy" : "") @(completed ? "is-complete" : "") @CssClass" style="--bk-radius:@BorderRadius;--bk-slide-progress:@(completed ? 100 : slideValue)%;--bk-slide-fraction:@((completed ? 1.0 : slideValue / 100.0).ToString(System.Globalization.CultureInfo.InvariantCulture));--bk-slide-fill:@(SlideFillColor ?? "color-mix(in srgb, var(--bk-accent) 45%, white)");--bk-slide-complete-text:@(SlideCompletedTextColor ?? "#102631")">
             <span class="bk-slide-fill" aria-hidden="true"></span>
             <span class="bk-slide-label">@CurrentText</span>
-            <span class="bk-slide-knob" aria-hidden="true">@if (busy && ShowProcessing) { <span class="bk-spinner"></span> } else if (completed) { @SuccessIconMarkup } else { @SlideIconMarkup }</span>
-            <input aria-label="@CurrentText" type="range" min="0" max="100" value="@slideValue" disabled="@(Disabled || busy || completed)" @oninput="OnSlideInput" @onchange="OnSlide" @onpointerup="ResetIncompleteSlide" @onpointercancel="ResetIncompleteSlide" />
-        </div>
-    }
+            <span class="bk-slide-knob" aria-hidden="true">@if (busy && ShowProcessing) {
+                <span class="bk-spinner"></span>
+            } else if (completed)
+            {
+
+                @SuccessIconMarkup
+            }
+            else
+            {
+
+                @SlideIconMarkup
+            }
+        </span>
+        <input aria-label="@CurrentText" type="range" min="0" max="100" value="@slideValue" disabled="@(Disabled || busy || completed)" @oninput="OnSlideInput" @onchange="OnSlide" @onpointerup="ResetIncompleteSlide" @onpointercancel="ResetIncompleteSlide" />
+    </div>
+}
     else if (Mode == ButtonMode.HoldToConfirm)
-    {
-        <div class="bk-hold-group bk-button--@Color.ToString().ToLowerInvariant()">
-            <button type="button" class="bk-hold-button @(holding ? "is-holding" : "") @(completed ? "is-complete" : "") @CssClass"
-                    style="--bk-hold-duration:@(HoldDuration)ms" disabled="@(Disabled || busy)" aria-label="@CurrentText" aria-busy="@busy"
-                    @onpointerdown="OnPointerDown" @onpointerup="CancelHold" @onpointerleave="CancelHold" @onpointercancel="CancelHold" @onkeydown="OnKeyDown" @onkeyup="OnKeyUp">
-                <svg class="bk-hold-ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="bk-hold-track" cx="32" cy="32" r="27"/><circle class="bk-hold-progress" cx="32" cy="32" r="27"/></svg>
-                @if (busy && ShowProcessing) { <span class="bk-spinner" aria-hidden="true"></span> }
-                else if (completed) { <span class="bk-hold-symbol bk-hold-success" aria-hidden="true">@SuccessIconMarkup</span> }
-                else if (Icon is not null) { <span class="bk-button-icon" aria-hidden="true">@Icon</span> }
-                else if (!string.IsNullOrWhiteSpace(ImageSrc)) { <img class="bk-button-image" src="@ImageSrc" alt="" /> }
-                else if (!string.IsNullOrWhiteSpace(IconClass)) { <i class="@IconClass" aria-hidden="true"></i> }
-                else { <span class="bk-hold-symbol" aria-hidden="true">@DefaultHoldIcon</span> }
-            </button>
-            <span class="bk-hold-label">@CurrentText</span>
-        </div>
-    }
-    else
-    {
-        <button type="@ButtonType" class="bk-button bk-button--@Color.ToString().ToLowerInvariant() bk-button--@Variant.ToString().ToLowerInvariant() bk-button--@Mode.ToString().ToLowerInvariant() @(busy ? "is-busy" : "") @(holding ? "is-holding" : "") @(completed ? "is-complete" : "") @CssClass"
-                style="--bk-radius:@BorderRadius;--bk-hold-duration:@(HoldDuration)ms" disabled="@(Disabled || busy)" aria-busy="@busy"
-                @onclick="OnClick" @onpointerdown="OnPointerDown" @onpointerup="CancelHold" @onpointerleave="CancelHold" @onpointercancel="CancelHold" @onkeydown="OnKeyDown" @onkeyup="OnKeyUp">
+{
+    <div class="bk-hold-group bk-button--@Color.ToString().ToLowerInvariant()">
+        <button type="button" class="bk-hold-button @(holding ? "is-holding" : "") @(completed ? "is-complete" : "") @CssClass"
+                style="--bk-hold-duration:@(HoldDuration)ms" disabled="@(Disabled || busy)" aria-label="@CurrentText" aria-busy="@busy"
+                @onpointerdown="OnPointerDown" @onpointerup="CancelHold" @onpointerleave="CancelHold" @onpointercancel="CancelHold" @onkeydown="OnKeyDown" @onkeyup="OnKeyUp">
+            <svg class="bk-hold-ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="bk-hold-track" cx="32" cy="32" r="27" /><circle class="bk-hold-progress" cx="32" cy="32" r="27" /></svg>
             @if (busy && ShowProcessing)
             {
                 <span class="bk-spinner" aria-hidden="true"></span>
             }
+            else if (completed)
+            {
+
+                <span class="bk-hold-symbol bk-hold-success" aria-hidden="true">@SuccessIconMarkup</span>
+            }
             else if (Icon is not null)
             {
+
                 <span class="bk-button-icon" aria-hidden="true">@Icon</span>
             }
             else if (!string.IsNullOrWhiteSpace(ImageSrc))
             {
+
                 <img class="bk-button-image" src="@ImageSrc" alt="" />
             }
             else if (!string.IsNullOrWhiteSpace(IconClass))
             {
+
                 <i class="@IconClass" aria-hidden="true"></i>
             }
-            <span>@CurrentText</span>
+            else
+            {
+
+                <span class="bk-hold-symbol" aria-hidden="true">@DefaultHoldIcon</span>
+            }
         </button>
-    }
+        <span class="bk-hold-label">@CurrentText</span>
+    </div>
+}
+else
+{
+    <button type="@ButtonType" class="bk-button bk-button--@Color.ToString().ToLowerInvariant() bk-button--@Variant.ToString().ToLowerInvariant() bk-button--@Mode.ToString().ToLowerInvariant() @(busy ? "is-busy" : "") @(holding ? "is-holding" : "") @(completed ? "is-complete" : "") @CssClass"
+            style="--bk-radius:@BorderRadius;--bk-hold-duration:@(HoldDuration)ms" disabled="@(Disabled || busy)" aria-busy="@busy"
+            @onclick="OnClick" @onpointerdown="OnPointerDown" @onpointerup="CancelHold" @onpointerleave="CancelHold" @onpointercancel="CancelHold" @onkeydown="OnKeyDown" @onkeyup="OnKeyUp">
+        @if (busy && ShowProcessing)
+        {
+            <span class="bk-spinner" aria-hidden="true"></span>
+        }
+        else if (Icon is not null)
+        {
+            <span class="bk-button-icon" aria-hidden="true">@Icon</span>
+        }
+        else if (!string.IsNullOrWhiteSpace(ImageSrc))
+        {
+            <img class="bk-button-image" src="@ImageSrc" alt="" />
+        }
+        else if (!string.IsNullOrWhiteSpace(IconClass))
+        {
+            <i class="@IconClass" aria-hidden="true"></i>
+        }
+        <span>@CurrentText</span>
+    </button>
+}
 </Tooltip>
 
 @code {
@@ -100,6 +135,8 @@
     [Parameter] public string? SuccessIconClass { get; set; }
     /// <summary>Displays custom markup on the slide handle.</summary>
     [Parameter] public RenderFragment? SlideIcon { get; set; }
+    /// <summary>Uses an icon class from the host application on the slide handle.</summary>
+    [Parameter] public string? SlideIconClass { get; set; }
     /// <summary>Sets the slide track fill color.</summary>
     [Parameter] public string? SlideFillColor { get; set; }
     /// <summary>Sets the text color after a slide succeeds.</summary>
@@ -114,7 +151,7 @@
     private RenderFragment DefaultHoldIcon => builder => { builder.OpenElement(0, "svg"); builder.AddAttribute(1, "viewBox", "0 0 24 24"); builder.AddAttribute(2, "fill", "none"); builder.AddAttribute(3, "stroke", "currentColor"); builder.AddAttribute(4, "stroke-width", "2"); builder.AddAttribute(5, "stroke-linecap", "round"); builder.AddAttribute(6, "stroke-linejoin", "round"); builder.AddMarkupContent(7, "<path d=\"M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v6m4-6v6\"/>"); builder.CloseElement(); };
     private RenderFragment DefaultSuccessIcon => builder => { builder.OpenElement(0, "svg"); builder.AddAttribute(1, "viewBox", "0 0 24 24"); builder.AddAttribute(2, "fill", "none"); builder.AddAttribute(3, "stroke", "currentColor"); builder.AddAttribute(4, "stroke-width", "2.5"); builder.AddAttribute(5, "stroke-linecap", "round"); builder.AddAttribute(6, "stroke-linejoin", "round"); builder.AddMarkupContent(7, "<path d=\"m5 12 4 4L19 6\"/>"); builder.CloseElement(); };
     private RenderFragment SuccessIconMarkup => SuccessIcon ?? (builder => { if (!string.IsNullOrWhiteSpace(SuccessImageSrc)) { builder.OpenElement(0, "img"); builder.AddAttribute(1, "src", SuccessImageSrc); builder.AddAttribute(2, "alt", ""); builder.CloseElement(); } else if (!string.IsNullOrWhiteSpace(SuccessIconClass)) { builder.OpenElement(0, "i"); builder.AddAttribute(1, "class", SuccessIconClass); builder.CloseElement(); } else builder.AddContent(0, DefaultSuccessIcon); });
-    private RenderFragment SlideIconMarkup => SlideIcon ?? (builder => builder.AddMarkupContent(0, "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m8 6 6 6-6 6m5-12 6 6-6 6\"/></svg>"));
+    private RenderFragment SlideIconMarkup => SlideIcon ?? (builder => { if (!string.IsNullOrWhiteSpace(SlideIconClass)) { builder.OpenElement(0, "i"); builder.AddAttribute(1, "class", SlideIconClass); builder.CloseElement(); } else builder.AddMarkupContent(0, "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m8 6 6 6-6 6m5-12 6 6-6 6\"/></svg>"); });
     private string CurrentText => busy && ShowProcessing ? ProcessingText ?? Texts.Get("Button.Working") :
         completed && !string.IsNullOrWhiteSpace(SuccessText) ? SuccessText : Text ?? Texts.Get(Mode switch
         {

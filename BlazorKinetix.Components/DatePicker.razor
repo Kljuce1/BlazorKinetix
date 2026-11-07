@@ -1,0 +1,61 @@
+@using BlazorKinetix.Core
+@using System.Globalization
+@inject KinetixTexts Texts
+
+<div class="bk-date-picker @CssClass">
+    @if (!string.IsNullOrWhiteSpace(Label)) { <label>@Label</label> }
+    <button type="button" class="bk-date-trigger" aria-haspopup="dialog" aria-expanded="@(open ? "true" : "false")" disabled="@Disabled" @onclick="Toggle">@(Value?.ToString(DateFormat, CultureInfo.CurrentCulture) ?? Placeholder ?? Texts.Get("Date.Choose"))</button>
+    @if (open)
+    {
+        <div class="bk-date-popover" role="dialog" aria-label="@(Label ?? Texts.Get("Date.Calendar"))" @onkeydown="OnKeyDown">
+            <div class="bk-date-popover-top"><strong>@(Label ?? Texts.Get("Date.Calendar"))</strong><button type="button" aria-label="@Texts.Get("Date.Close")" @onclick="Close">×</button></div>
+            <CalendarPanel @bind-VisibleMonth="visibleMonth" Value="Value" MinDate="MinDate" MaxDate="MaxDate" DisabledDates="DisabledDates" Availability="Availability" DayContent="DayContent" DateClicked="Select" PreviousIcon="PreviousIcon" NextIcon="NextIcon" PreviousIconClass="@PreviousIconClass" NextIconClass="@NextIconClass" />
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Gets or sets the selected date.</summary>
+    [Parameter] public DateOnly? Value { get; set; }
+    /// <summary>Runs when the selected date changes.</summary>
+    [Parameter] public EventCallback<DateOnly?> ValueChanged { get; set; }
+    /// <summary>Displays a label above the picker.</summary>
+    [Parameter] public string? Label { get; set; }
+    /// <summary>Displays text when no date is selected.</summary>
+    [Parameter] public string? Placeholder { get; set; }
+    /// <summary>Sets the date display format.</summary>
+    [Parameter] public string DateFormat { get; set; } = "d";
+    /// <summary>Sets the earliest selectable date.</summary>
+    [Parameter] public DateOnly? MinDate { get; set; }
+    /// <summary>Sets the latest selectable date.</summary>
+    [Parameter] public DateOnly? MaxDate { get; set; }
+    /// <summary>Sets dates that cannot be selected.</summary>
+    [Parameter] public IReadOnlyCollection<DisabledDate>? DisabledDates { get; set; }
+    /// <summary>Displays additional text for dates.</summary>
+    [Parameter] public IReadOnlyCollection<DateAvailability>? Availability { get; set; }
+    /// <summary>Replaces the content below each day number.</summary>
+    [Parameter] public RenderFragment<DateOnly>? DayContent { get; set; }
+    /// <summary>Displays custom markup for the previous month icon.</summary>
+    [Parameter] public RenderFragment? PreviousIcon { get; set; }
+    /// <summary>Uses an icon class from the host application for the previous month.</summary>
+    [Parameter] public string? PreviousIconClass { get; set; }
+    /// <summary>Displays custom markup for the next month icon.</summary>
+    [Parameter] public RenderFragment? NextIcon { get; set; }
+    /// <summary>Uses an icon class from the host application for the next month.</summary>
+    [Parameter] public string? NextIconClass { get; set; }
+    /// <summary>Disables the picker.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Adds CSS classes to the picker.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private bool open;
+    private DateOnly visibleMonth = DateOnly.FromDateTime(DateTime.Today);
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Value is { } date && !DateSelectionRules.IsSelectable(date, MinDate, MaxDate, DisabledDates)) await ValueChanged.InvokeAsync(null);
+    }
+    private void Toggle() { open = !open; if (open) visibleMonth = Value ?? MinDate ?? DateOnly.FromDateTime(DateTime.Today); }
+    private void Close() => open = false;
+    private async Task Select(DateOnly date) { open = false; await ValueChanged.InvokeAsync(date); }
+    private void OnKeyDown(KeyboardEventArgs args) { if (args.Key == "Escape") Close(); }
+}

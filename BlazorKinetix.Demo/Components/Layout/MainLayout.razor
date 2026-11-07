@@ -2,16 +2,26 @@
 @inject BlazorKinetix.Core.KinetixTexts Texts
 
 <header class="site-header">
-    <a class="brand" href="/">✦ <span>BlazorKinetix</span></a>
-    <nav aria-label="@T("Demo.Nav.Label")">
-        <a href="/#inputs">InputBox</a>
-        <a href="/#buttons">Button</a>
-        <a href="/#tooltip">Tooltip</a>
-        <a href="/#modal">Modal</a>
-        <a href="/docs">@T("Demo.Nav.Docs")</a>
-        <button class="language-switch" type="button" lang="@(Language == "es" ? "en" : "es")" aria-label="@T("Demo.Nav.SwitchLanguage")" onclick="blazorKinetixLanguage.set('@(Language == "es" ? "en" : "es")')"><span aria-hidden="true">🌐</span> @(Language == "es" ? "English" : "Español")</button>
-        <button class="theme-toggle" type="button" onclick="blazorKinetixTheme.toggle()" aria-label="@T("Demo.Nav.ToggleTheme")">◐ <span>@T("Demo.Nav.Theme")</span></button>
-    </nav>
+    <div class="site-header-inner">
+        <a class="brand" href="/" aria-label="BlazorKinetix"><span class="brand-mark"><img src="/android-chrome-192x192.png" width="36" height="36" alt="" /></span><span>BlazorKinetix</span></a>
+        <nav class="desktop-nav" aria-label="@T("Demo.Nav.Label")">
+            <a href="/#catalog">@T("Demo.Nav.Controls")</a>
+            <a href="/#dates">@T("Demo.Nav.Dates")</a>
+            <a href="/docs">@T("Demo.Nav.Docs")</a>
+        </nav>
+        <div class="header-actions">
+            <button class="language-switch" type="button" lang="@(Language == "es" ? "en" : "es")" aria-label="@T("Demo.Nav.SwitchLanguage")" title="@T("Demo.Nav.SwitchLanguage")" onclick="blazorKinetixLanguage.set('@(Language == "es" ? "en" : "es")')"><span aria-hidden="true">🌐</span><span class="action-label">@(Language == "es" ? "English" : "Español")</span></button>
+            <button class="theme-toggle" type="button" onclick="blazorKinetixTheme.toggle()" aria-label="@T("Demo.Nav.ToggleTheme")" title="@T("Demo.Nav.ToggleTheme")"><span aria-hidden="true">◐</span><span class="action-label">@T("Demo.Nav.Theme")</span></button>
+            <details class="mobile-menu">
+                <summary aria-label="@T("Demo.Nav.OpenMenu")" title="@T("Demo.Nav.OpenMenu")"><span class="menu-bars" aria-hidden="true"><span></span><span></span><span></span></span></summary>
+                <nav aria-label="@T("Demo.Nav.Label")">
+                    <a href="/#catalog" onclick="this.closest('details').open=false">@T("Demo.Nav.Controls")</a>
+                    <a href="/#dates" onclick="this.closest('details').open=false">@T("Demo.Nav.Dates")</a>
+                    <a href="/docs">@T("Demo.Nav.Docs")</a>
+                </nav>
+            </details>
+        </div>
+    </div>
 </header>
 <main>@Body</main>
 <footer class="site-footer"><span>BlazorKinetix</span><span>@T("Demo.Footer")</span></footer>

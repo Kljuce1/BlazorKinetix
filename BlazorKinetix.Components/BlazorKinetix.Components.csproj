@@ -7,7 +7,7 @@
     <PackageId>BlazorKinetix</PackageId>
     <Version>0.1.0-preview.1</Version>
     <Authors>Ivan</Authors>
-    <Description>Themeable input, button, and tooltip components for Blazor Server and WebAssembly.</Description>
+    <Description>Themeable form, action, feedback, date, and time components for Blazor Server and WebAssembly.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>

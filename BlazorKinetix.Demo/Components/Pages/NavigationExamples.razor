@@ -1,0 +1,42 @@
+@inject KinetixTexts Texts
+
+<section class="section" id="navigation">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Navigation.Eyebrow")</span><div><h2>NavMenu</h2><p>@T("Demo.Navigation.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card nav-demo-card">
+            <span class="eyebrow">@T("Demo.Navigation.Basic.Tag")</span><h3>@T("Demo.Navigation.Basic.Title")</h3><p>@T("Demo.Navigation.Basic.Description")</p>
+            <div class="nav-demo-stage"><NavMenu Items="@AdminItems" Title="@T("Demo.Navigation.Basic.MenuTitle")" FooterText="@T("Demo.Navigation.Basic.Footer")" @bind-SelectedKey="adminSelected" @bind-IsCollapsed="adminCollapsed" /></div>
+            <p class="nav-demo-status">@T("Demo.Navigation.Selected"): @SelectedText(AdminItems, adminSelected)</p>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("nav-basic")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card nav-demo-card">
+            <span class="eyebrow">@T("Demo.Navigation.Custom.Tag")</span><h3>@T("Demo.Navigation.Custom.Title")</h3><p>@T("Demo.Navigation.Custom.Description")</p>
+            <div class="nav-demo-stage nav-demo-violet"><NavMenu Items="@ProjectItems" Title="@T("Demo.Navigation.Custom.MenuTitle")" MobileTriggerText="@T("Demo.Navigation.Custom.Trigger")" @bind-SelectedKey="projectSelected" /></div>
+            <p class="nav-demo-status">@T("Demo.Navigation.Selected"): @SelectedText(ProjectItems, projectSelected)</p>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("nav-custom")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+</section>
+
+@code {
+    [Parameter] public EventCallback<string> OnShowCode { get; set; }
+    private string? adminSelected = "overview", projectSelected = "board";
+    private bool adminCollapsed;
+    private string T(string key) => Texts.Get(key);
+    private IReadOnlyList<NavMenuItem> AdminItems => [
+        new() { Key = "overview", Text = T("Demo.Navigation.Overview") },
+        new() { Key = "bookings", Text = T("Demo.Navigation.Bookings"), Children = [
+            new() { Key = "upcoming", Text = T("Demo.Navigation.Upcoming") },
+            new() { Key = "history", Text = T("Demo.Navigation.History") }] },
+        new() { Key = "reports", Text = T("Demo.Navigation.Reports") },
+        new() { Key = "billing", Text = T("Demo.Navigation.Billing"), Enabled = false }
+    ];
+    private IReadOnlyList<NavMenuItem> ProjectItems => [
+        new() { Key = "board", Text = T("Demo.Navigation.Board"), IconClass = "demo-nav-icon demo-nav-grid" },
+        new() { Key = "activity", Text = T("Demo.Navigation.Activity"), IconClass = "demo-nav-icon demo-nav-pulse" },
+        new() { Key = "team", Text = T("Demo.Navigation.Team"), Children = [
+            new() { Key = "members", Text = T("Demo.Navigation.Members") },
+            new() { Key = "invitations", Text = T("Demo.Navigation.Invitations") }] }
+    ];
+    private string SelectedText(IReadOnlyList<NavMenuItem> items, string? key) => items.SelectMany(item => new[] { item }.Concat(item.Children)).FirstOrDefault(item => item.Key == key)?.Text ?? "—";
+}
