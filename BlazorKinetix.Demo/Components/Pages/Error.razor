@@ -1,0 +1,26 @@
+@page "/Error"
+@using System.Diagnostics
+@inject KinetixTexts Texts
+@inject IWebHostEnvironment HostEnvironment
+
+<PageTitle>@Texts.Get("Demo.Error.Title")</PageTitle>
+<div class="docs">
+    <h1>@Texts.Get("Demo.Error.Title")</h1>
+    <p>@Texts.Get("Demo.Error.Body")</p>
+    @if (!string.IsNullOrEmpty(RequestId))
+    {
+        <p><strong>@Texts.Get("Demo.Error.RequestId")</strong> <code>@RequestId</code></p>
+    }
+    @if (IsDevelopment)
+    {
+        <h2>@Texts.Get("Demo.Error.Development")</h2>
+        <p>@Texts.Get("Demo.Error.DevelopmentBody")</p>
+    }
+</div>
+
+@code {
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+    private string? RequestId;
+    private bool IsDevelopment => HostEnvironment.IsDevelopment();
+    protected override void OnInitialized() => RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}

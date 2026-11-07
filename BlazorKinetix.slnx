@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="BlazorKinetix.Components/BlazorKinetix.Components.csproj" />
+  <Project Path="BlazorKinetix.Core/BlazorKinetix.Core.csproj" />
+  <Project Path="BlazorKinetix.Demo/BlazorKinetix.Demo.csproj" />
+</Solution>

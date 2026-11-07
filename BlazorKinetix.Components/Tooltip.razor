@@ -1,0 +1,56 @@
+@using BlazorKinetix.Core
+@implements IDisposable
+
+<span class="bk-tooltip-host" @onmouseenter="OnEnter" @onmouseleave="Hide" @onfocusin="OnFocus" @onfocusout="Hide" @onkeydown="OnKeyDown">
+    @ChildContent
+    @if (visible && !string.IsNullOrWhiteSpace(Text))
+    {
+        <span id="@tooltipId" class="bk-tooltip bk-tooltip--@Position.ToString().ToLowerInvariant()" role="tooltip">@Text</span>
+    }
+</span>
+
+@code {
+    /// <summary>Content that anchors the tooltip.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Text displayed in the tooltip.</summary>
+    [Parameter] public string? Text { get; set; }
+    /// <summary>Tooltip placement relative to its anchor.</summary>
+    [Parameter] public TooltipPosition Position { get; set; } = TooltipPosition.Top;
+    /// <summary>Shows the tooltip on hover and keyboard focus.</summary>
+    [Parameter] public bool ShowOnHover { get; set; } = true;
+    /// <summary>Time in milliseconds before a programmatically shown tooltip closes; zero keeps it open.</summary>
+    [Parameter] public int Duration { get; set; } = 2200;
+
+    private readonly string tooltipId = $"bk-tip-{Guid.NewGuid():N}";
+    private CancellationTokenSource? hideToken;
+    private bool visible;
+
+    /// <summary>Shows the tooltip for its configured duration.</summary>
+    public async Task ShowAsync()
+    {
+        hideToken?.Cancel();
+        hideToken?.Dispose();
+        hideToken = new CancellationTokenSource();
+        visible = true;
+        await InvokeAsync(StateHasChanged);
+        if (Duration > 0)
+        {
+            try { await Task.Delay(Duration, hideToken.Token); await InvokeAsync(Hide); }
+            catch (OperationCanceledException) { }
+        }
+    }
+
+    /// <summary>Closes the tooltip.</summary>
+    public void Hide()
+    {
+        hideToken?.Cancel();
+        visible = false;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnEnter() { if (ShowOnHover) visible = true; }
+    private void OnFocus() { if (ShowOnHover) visible = true; }
+    private void OnKeyDown(KeyboardEventArgs args) { if (args.Key == "Escape") Hide(); }
+    public void Dispose() { hideToken?.Cancel(); hideToken?.Dispose(); }
+}
+

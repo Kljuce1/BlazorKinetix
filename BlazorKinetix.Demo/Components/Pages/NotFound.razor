@@ -1,0 +1,10 @@
+@page "/not-found"
+@layout MainLayout
+@inject KinetixTexts Texts
+
+<PageTitle>@Texts.Get("Demo.NotFound.Title")</PageTitle>
+<div class="docs">
+    <h1>@Texts.Get("Demo.NotFound.Title")</h1>
+    <p>@Texts.Get("Demo.NotFound.Body")</p>
+    <a href="/">@Texts.Get("Demo.Docs.Back")</a>
+</div>

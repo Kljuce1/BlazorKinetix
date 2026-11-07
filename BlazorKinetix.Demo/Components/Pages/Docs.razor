@@ -1,0 +1,59 @@
+@page "/docs"
+@inject KinetixTexts Texts
+
+<PageTitle>@T("Demo.Docs.PageTitle")</PageTitle>
+<div class="docs">
+    <a href="/">@T("Demo.Docs.Back")</a>
+    <span class="eyebrow">@T("Demo.Docs.Eyebrow")</span>
+    <h1>@T("Demo.Docs.Title")</h1>
+    <p>@T("Demo.Docs.Intro")</p>
+
+    <h2>@T("Demo.Docs.Register")</h2>
+    <pre><code>builder.Services.AddBlazorKinetix();</code></pre>
+    <p>@T("Demo.Docs.RegisterBody")</p>
+
+    <h2>InputBox</h2>
+    <pre><code>&lt;InputBox TValue="string" Title="Email" Email="true"
+          Appearance="InputBoxAppearance.Gradient"
+          LabelMode="InputBoxLabelMode.Floating"
+          LiveValidation="true" @@bind-Value="email" /&gt;</code></pre>
+    <p>@T("Demo.Docs.InputBody")</p>
+
+    <h2>Button</h2>
+    <pre><code>&lt;Button Text="Save" OnAction="SaveAsync"
+               ProcessingText="Saving…" /&gt;
+
+&lt;Button Mode="ButtonMode.ActionFeedback"
+        Text="Apply" FeedbackText="Applied!"
+        OnAction="Apply" /&gt;</code></pre>
+    <p>@T("Demo.Docs.ButtonBody")</p>
+
+    <h2>Tooltip</h2>
+    <pre><code>&lt;Tooltip Text="More details here"&gt;
+    &lt;button type="button"&gt;Details&lt;/button&gt;
+&lt;/Tooltip&gt;</code></pre>
+    <p>@T("Demo.Docs.TooltipBody")</p>
+
+    <h2>Modal</h2>
+    <pre><code>&lt;Button Text="Open details" OnAction="() =&gt; detailsOpen = true" /&gt;
+
+&lt;Modal Title="Details" Size="ModalSize.Compact"
+       @@bind-IsOpen="detailsOpen"&gt;
+    &lt;p&gt;Place any Razor content here.&lt;/p&gt;
+&lt;/Modal&gt;</code></pre>
+    <p>@T("Demo.Docs.ModalBody")</p>
+
+    <h2>@T("Demo.Docs.Theme")</h2>
+    <pre><code>:root {
+  --bk-primary: #075b62;
+  --bk-surface: #fff;
+  --bk-text: #243447;
+  --bk-gradient-start: #7159ed;
+  --bk-gradient-end: #20c4e2;
+}</code></pre>
+    <p>@T("Demo.Docs.ThemeBody")</p>
+</div>
+
+@code {
+    private string T(string key) => Texts.Get(key);
+}

@@ -1,0 +1,278 @@
+@typeparam TValue
+@implements IDisposable
+@using System.Globalization
+@using System.Linq.Expressions
+@using System.Net.Mail
+@using BlazorKinetix.Core
+@using Microsoft.AspNetCore.Components.Forms
+@inject KinetixTexts Texts
+
+<div class="bk-input bk-input--@Appearance.ToString().ToLowerInvariant() bk-input--@Color.ToString().ToLowerInvariant() @(HasError ? "is-invalid" : "") @(Disabled ? "is-disabled" : "") @CssClass">
+    @if (LabelMode == InputBoxLabelMode.Above && !string.IsNullOrWhiteSpace(Title))
+    {
+        <label class="bk-label" for="@inputId">@Title @if (Required) { <span class="bk-required" aria-hidden="true">*</span> }</label>
+    }
+    <div class="bk-control @(LabelMode == InputBoxLabelMode.Floating ? "bk-floating" : "") @(IsFloating ? "has-value" : "")">
+        @if (Icon is not null || !string.IsNullOrWhiteSpace(IconClass))
+        {
+            <span class="bk-leading" aria-hidden="true">@if (Icon is not null) { @Icon } else { <i class="@IconClass"></i> }</span>
+        }
+        <input id="@inputId" name="@Name" type="@HtmlInputType" value="@rawText" placeholder="@(LabelMode == InputBoxLabelMode.Floating ? " " : Placeholder)"
+               inputmode="@InputMode" autocomplete="@Autocomplete" maxlength="@MaxLength" minlength="@MinLength" required="@(NativeValidation && Required)" autofocus="@AutoFocus" disabled="@Disabled" readonly="@ReadOnly"
+               aria-label="@(string.IsNullOrWhiteSpace(Title) ? Placeholder : null)" aria-required="@Required" aria-invalid="@HasError" aria-describedby="@DescriptionIds"
+               @oninput="HandleInput" @onblur="HandleBlur" />
+        @if (LabelMode == InputBoxLabelMode.Floating && !string.IsNullOrWhiteSpace(Title))
+        {
+            <label class="bk-float-label" for="@inputId">@Title @if (Required) { <span aria-hidden="true">*</span> }</label>
+        }
+        @if (Kind == InputBoxKind.Password)
+        {
+            <button class="bk-eye" type="button" disabled="@Disabled" aria-label="@(passwordVisible ? Texts.Get("Input.HidePassword") : Texts.Get("Input.ShowPassword"))" aria-pressed="@passwordVisible" @onclick="TogglePassword">
+                @if (passwordVisible && HidePasswordIcon is not null) { @HidePasswordIcon }
+                else if (!passwordVisible && ShowPasswordIcon is not null) { @ShowPasswordIcon }
+                else
+                {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>@if (!passwordVisible) { <path d="m3 3 18 18"/> }</svg>
+                }
+            </button>
+        }
+        @if (Action is not null) { <span class="bk-action">@Action</span> }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(HelpText)) { <small class="bk-help" id="@helpId">@HelpText</small> }
+    @if (ShowCharacterCount && MaxLength is { } limit && Kind == InputBoxKind.Text) { <small class="bk-count">@rawText.Length / @limit</small> }
+    @if (Kind == InputBoxKind.Password && ShowPasswordStrength && rawText.Length > 0)
+    {
+        <div class="bk-strength" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@StrengthScore" aria-label="@Texts.Get("Input.Strength", new Dictionary<string,string> { ["strength"] = StrengthLabel })">
+            <span class="bk-strength-fill" style="width:@StrengthScore%"></span>
+        </div>
+        <small class="bk-help">@Texts.Get("Input.Strength", new Dictionary<string,string> { ["strength"] = StrengthLabel })</small>
+    }
+    @if (HasError) { <small class="bk-error" id="@errorId" role="alert">@DisplayedError</small> }
+</div>
+
+@code {
+    [CascadingParameter] private EditContext? EditContext { get; set; }
+    /// <summary>Current field value.</summary>
+    [Parameter] public TValue? Value { get; set; }
+    /// <summary>Runs when a valid field value changes.</summary>
+    [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
+    /// <summary>Identifies the bound EditForm field.</summary>
+    [Parameter] public Expression<Func<TValue?>>? ValueExpression { get; set; }
+    /// <summary>Sets text, integer, decimal, or password parsing.</summary>
+    [Parameter] public InputBoxKind Kind { get; set; } = InputBoxKind.Text;
+    /// <summary>Sets the field border treatment.</summary>
+    [Parameter] public InputBoxAppearance Appearance { get; set; }
+    /// <summary>Sets the label placement.</summary>
+    [Parameter] public InputBoxLabelMode LabelMode { get; set; }
+    /// <summary>Sets the field's color role.</summary>
+    [Parameter] public ColorRole Color { get; set; } = ColorRole.Primary;
+    /// <summary>Displays the field label.</summary>
+    [Parameter] public string? Title { get; set; }
+    /// <summary>Sets the HTML name.</summary>
+    [Parameter] public string? Name { get; set; }
+    /// <summary>Sets the HTML id.</summary>
+    [Parameter] public string? Id { get; set; }
+    /// <summary>Displays placeholder text.</summary>
+    [Parameter] public string? Placeholder { get; set; }
+    /// <summary>Displays supporting text below the field.</summary>
+    [Parameter] public string? HelpText { get; set; }
+    /// <summary>Overrides the displayed validation message.</summary>
+    [Parameter] public string? ErrorText { get; set; }
+    /// <summary>Displays an icon from the host application's CSS.</summary>
+    [Parameter] public string? IconClass { get; set; }
+    /// <summary>Displays custom leading icon markup.</summary>
+    [Parameter] public RenderFragment? Icon { get; set; }
+    /// <summary>Displays a control at the field's trailing edge.</summary>
+    [Parameter] public RenderFragment? Action { get; set; }
+    /// <summary>Overrides the show-password icon.</summary>
+    [Parameter] public RenderFragment? ShowPasswordIcon { get; set; }
+    /// <summary>Overrides the hide-password icon.</summary>
+    [Parameter] public RenderFragment? HidePasswordIcon { get; set; }
+    /// <summary>Sets browser autocomplete.</summary>
+    [Parameter] public string? Autocomplete { get; set; }
+    /// <summary>Requires a nonempty value.</summary>
+    [Parameter] public bool Required { get; set; }
+    /// <summary>Disables the field.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Prevents value changes.</summary>
+    [Parameter] public bool ReadOnly { get; set; }
+    /// <summary>Focuses the field on page load.</summary>
+    [Parameter] public bool AutoFocus { get; set; }
+    /// <summary>Converts text to uppercase.</summary>
+    [Parameter] public bool Uppercase { get; set; }
+    /// <summary>Capitalizes the first letter.</summary>
+    [Parameter] public bool CapitalizeFirstLetter { get; set; }
+    /// <summary>Validates text as an email address.</summary>
+    [Parameter] public bool Email { get; set; }
+    /// <summary>Enables the browser's built-in email and required validation.</summary>
+    [Parameter] public bool NativeValidation { get; set; }
+    /// <summary>Sets the minimum text length.</summary>
+    [Parameter] public int? MinLength { get; set; }
+    /// <summary>Sets the maximum text length.</summary>
+    [Parameter] public int? MaxLength { get; set; }
+    /// <summary>Sets the minimum numeric value.</summary>
+    [Parameter] public decimal? Minimum { get; set; }
+    /// <summary>Sets the maximum numeric value.</summary>
+    [Parameter] public decimal? Maximum { get; set; }
+    /// <summary>Shows validation while typing.</summary>
+    [Parameter] public bool LiveValidation { get; set; }
+    /// <summary>Shows a character counter when MaxLength is set.</summary>
+    [Parameter] public bool ShowCharacterCount { get; set; }
+    /// <summary>Shows estimated password strength.</summary>
+    [Parameter] public bool ShowPasswordStrength { get; set; }
+    /// <summary>Sets the minimum password length.</summary>
+    [Parameter] public int MinimumPasswordLength { get; set; }
+    /// <summary>Sets the minimum uppercase letter count.</summary>
+    [Parameter] public int MinimumUppercase { get; set; }
+    /// <summary>Sets the minimum digit count.</summary>
+    [Parameter] public int MinimumDigits { get; set; }
+    /// <summary>Sets the minimum special character count.</summary>
+    [Parameter] public int MinimumSpecial { get; set; }
+    /// <summary>Adds CSS classes to the field.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private readonly string generatedId = $"bk-input-{Guid.NewGuid():N}";
+    private string inputId = "", helpId = "", errorId = "", rawText = "";
+    private string? localError, parseError;
+    private TValue? observedValue;
+    private bool initialized, touched, passwordVisible;
+    private FieldIdentifier? fieldIdentifier;
+    private EditContext? subscribedContext;
+    private ValidationMessageStore? messages;
+    private bool HasError => !string.IsNullOrWhiteSpace(DisplayedError);
+    private string? DisplayedError => ErrorText ?? ((touched || LiveValidation) ? localError ?? (fieldIdentifier is { } currentField ? EditContext?.GetValidationMessages(currentField).FirstOrDefault() : null) : null);
+    private string DescriptionIds => string.Join(' ', new[] { !string.IsNullOrWhiteSpace(HelpText) ? helpId : null, HasError ? errorId : null }.Where(x => x is not null));
+    private bool IsFloating => !string.IsNullOrEmpty(rawText);
+    private string HtmlInputType => Kind == InputBoxKind.Password && !passwordVisible ? "password" : NativeValidation && Email && Kind == InputBoxKind.Text ? "email" : "text";
+    private string? InputMode => Kind switch { InputBoxKind.Integer => "numeric", InputBoxKind.Decimal => "decimal", InputBoxKind.Text when Email => "email", _ => null };
+    private string FieldName => string.IsNullOrWhiteSpace(Title) ? Texts.Get("Input.Field") : Title.Trim();
+
+    protected override void OnParametersSet()
+    {
+        inputId = Id ?? generatedId;
+        helpId = inputId + "-help";
+        errorId = inputId + "-error";
+        if (!initialized || !EqualityComparer<TValue?>.Default.Equals(Value, observedValue))
+        {
+            rawText = Convert.ToString(Value, CultureInfo.CurrentCulture) ?? "";
+            observedValue = Value;
+            initialized = true;
+        }
+        if (subscribedContext != EditContext)
+        {
+            if (subscribedContext is not null) subscribedContext.OnValidationRequested -= OnValidationRequested;
+            subscribedContext = EditContext;
+            messages = EditContext is null ? null : new ValidationMessageStore(EditContext);
+            if (EditContext is not null) EditContext.OnValidationRequested += OnValidationRequested;
+        }
+        fieldIdentifier = ValueExpression is null ? null : FieldIdentifier.Create(ValueExpression);
+    }
+
+    private async Task HandleInput(ChangeEventArgs args)
+    {
+        rawText = Normalize(args.Value?.ToString() ?? "");
+        if (TryConvert(rawText, out var next, out parseError))
+        {
+            observedValue = next;
+            await ValueChanged.InvokeAsync(next);
+            if (fieldIdentifier is { } field) EditContext?.NotifyFieldChanged(field);
+        }
+        if (touched || LiveValidation) Validate();
+    }
+
+    private void HandleBlur(FocusEventArgs _) { touched = true; Validate(); }
+    private void TogglePassword() => passwordVisible = !passwordVisible;
+
+    /// <summary>Validates the current value and returns whether it is valid.</summary>
+    public bool ValidateField() { touched = true; Validate(); _ = InvokeAsync(StateHasChanged); return !HasError; }
+    private void OnValidationRequested(object? sender, ValidationRequestedEventArgs args) => ValidateField();
+
+    private void Validate()
+    {
+        localError = parseError ?? RuleError();
+        if (fieldIdentifier is { } field && messages is not null)
+        {
+            messages.Clear(field);
+            if (localError is not null) messages.Add(field, localError);
+            EditContext?.NotifyValidationStateChanged();
+        }
+    }
+
+    private string? RuleError()
+    {
+        if (Required && string.IsNullOrWhiteSpace(rawText)) return Message("Input.Required");
+        if (string.IsNullOrWhiteSpace(rawText)) return null;
+        if (Kind == InputBoxKind.Text)
+        {
+            if (MinLength is { } min && rawText.Length < min) return Message("Input.MinLength", "min", min.ToString());
+            if (MaxLength is { } max && rawText.Length > max) return Message("Input.MaxLength", "max", max.ToString());
+            if (Email && (!MailAddress.TryCreate(rawText.Trim(), out var address) || address.Address != rawText.Trim())) return Message("Input.InvalidEmail");
+        }
+        if (Kind is InputBoxKind.Integer or InputBoxKind.Decimal && TryConvert(rawText, out var value, out _))
+        {
+            var number = Convert.ToDecimal(value, CultureInfo.CurrentCulture);
+            if (Minimum is { } min && number < min) return Message("Input.Minimum", "min", min.ToString(CultureInfo.CurrentCulture));
+            if (Maximum is { } max && number > max) return Message("Input.Maximum", "max", max.ToString(CultureInfo.CurrentCulture));
+        }
+        if (Kind == InputBoxKind.Password)
+        {
+            var unmet = PasswordRequirements.FirstOrDefault(x => !x.Met);
+            if (unmet.Text is not null) return Message("Input.PasswordRequirement", "requirement", unmet.Text);
+        }
+        return null;
+    }
+
+    private string Message(string key, string? extraKey = null, string? extraValue = null)
+    {
+        var values = new Dictionary<string, string> { ["field"] = FieldName };
+        if (extraKey is not null) values[extraKey] = extraValue ?? "";
+        return Texts.Get(key, values);
+    }
+
+    private bool TryConvert(string text, out TValue? result, out string? error)
+    {
+        result = default;
+        error = null;
+        var type = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
+        if (Kind is InputBoxKind.Text or InputBoxKind.Password)
+        {
+            if (type != typeof(string)) { error = "The field value must be a string."; return false; }
+            result = (TValue?)(object)text;
+            return true;
+        }
+        if (string.IsNullOrWhiteSpace(text)) return true;
+        if (Kind == InputBoxKind.Integer && type == typeof(int) && int.TryParse(text, NumberStyles.Integer, CultureInfo.CurrentCulture, out var integer))
+        { result = (TValue?)(object)integer; return true; }
+        if (Kind == InputBoxKind.Decimal && type == typeof(decimal) && decimal.TryParse(text, NumberStyles.Number, CultureInfo.CurrentCulture, out var number))
+        { result = (TValue?)(object)number; return true; }
+        error = Message(Kind == InputBoxKind.Integer ? "Input.InvalidInteger" : "Input.InvalidDecimal");
+        return false;
+    }
+
+    private string Normalize(string text)
+    {
+        if (Kind != InputBoxKind.Text || text.Length == 0) return text;
+        if (Uppercase) return text.ToUpper(CultureInfo.CurrentCulture);
+        if (!CapitalizeFirstLetter) return text;
+        for (var i = 0; i < text.Length; i++)
+            if (char.IsLetter(text[i])) return text[..i] + char.ToUpper(text[i], CultureInfo.CurrentCulture) + text[(i + 1)..];
+        return text;
+    }
+
+    private List<(string Text, bool Met)> PasswordRequirements
+    {
+        get
+        {
+            var items = new List<(string, bool)>();
+            if (MinimumPasswordLength > 0) items.Add((Texts.Get("Input.PasswordLength", new Dictionary<string,string> { ["min"] = MinimumPasswordLength.ToString() }), rawText.Length >= MinimumPasswordLength));
+            if (MinimumUppercase > 0) items.Add((Texts.Get("Input.PasswordUppercase", new Dictionary<string,string> { ["min"] = MinimumUppercase.ToString() }), rawText.Count(char.IsUpper) >= MinimumUppercase));
+            if (MinimumDigits > 0) items.Add((Texts.Get("Input.PasswordDigits", new Dictionary<string,string> { ["min"] = MinimumDigits.ToString() }), rawText.Count(char.IsDigit) >= MinimumDigits));
+            if (MinimumSpecial > 0) items.Add((Texts.Get("Input.PasswordSpecial", new Dictionary<string,string> { ["min"] = MinimumSpecial.ToString() }), rawText.Count(c => !char.IsLetterOrDigit(c) && !char.IsWhiteSpace(c)) >= MinimumSpecial));
+            return items;
+        }
+    }
+    private int StrengthScore => Math.Clamp(rawText.Length * 4 + (rawText.Any(char.IsUpper) ? 15 : 0) + (rawText.Any(char.IsDigit) ? 15 : 0) + (rawText.Any(c => !char.IsLetterOrDigit(c)) ? 15 : 0), 0, 100);
+    private string StrengthLabel => Texts.Get(StrengthScore switch { < 35 => "Input.Strength.Weak", < 70 => "Input.Strength.Fair", _ => "Input.Strength.Strong" });
+    public void Dispose() { if (subscribedContext is not null) subscribedContext.OnValidationRequested -= OnValidationRequested; }
+}
+

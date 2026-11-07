@@ -1,0 +1,125 @@
+@page "/"
+@rendermode InteractiveServer
+@inject KinetixTexts Texts
+
+<PageTitle>@T("Demo.Home.PageTitle")</PageTitle>
+<section class="hero">
+    <div>
+        <span class="eyebrow">@T("Demo.Hero.Eyebrow")</span>
+        <h1>@T("Demo.Hero.Title")</h1>
+        <p>@T("Demo.Hero.Description")</p>
+        <a class="hero-link" href="#inputs">@T("Demo.Hero.Explore")</a>
+    </div>
+    <div class="hero-panel">
+        <span class="eyebrow">@T("Demo.Hero.Preview")</span>
+        <InputBox TValue="string" Title="@T("Demo.Hero.Email")" Email="true" LabelMode="InputBoxLabelMode.Floating" Appearance="InputBoxAppearance.Gradient" LiveValidation="true" @bind-Value="email" />
+        <Button Text="@T("Demo.Hero.Started")" OnAction="Confirm" />
+        <small>@Status</small>
+    </div>
+</section>
+
+<section class="section" id="inputs">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Input.Eyebrow")</span><div><h2>InputBox</h2><p>@T("Demo.Input.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Input.Normal.Tag")</span><h3>@T("Demo.Input.Normal.Title")</h3><p>@T("Demo.Input.Normal.Description")</p>
+            <InputBox TValue="string" Title="@T("Demo.Input.Normal.Label")" Placeholder="@T("Demo.Input.Normal.Placeholder")" Required="true" HelpText="@T("Demo.Input.Normal.Help")" @bind-Value="name" />
+            <button class="view-code" type="button" @onclick='() => ShowCode("normal")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Input.Floating.Tag")</span><h3>@T("Demo.Input.Floating.Title")</h3><p>@T("Demo.Input.Floating.Description")</p>
+            <InputBox TValue="string" Title="@T("Demo.Input.Floating.Label")" Email="true" LabelMode="InputBoxLabelMode.Floating" LiveValidation="true" @bind-Value="email" />
+            <button class="view-code" type="button" @onclick='() => ShowCode("floating")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Input.Gradient.Tag")</span><h3>@T("Demo.Input.Gradient.Title")</h3><p>@T("Demo.Input.Gradient.Description")</p>
+            <InputBox TValue="string" Title="@T("Demo.Input.Gradient.Label")" Appearance="InputBoxAppearance.Gradient" @bind-Value="promo">
+                <Action><Button Mode="ButtonMode.ActionFeedback" Text="@T("Demo.Input.Gradient.Apply")" FeedbackText="@T("Demo.Input.Gradient.Applied")" OnAction="ApplyPromo" /></Action>
+            </InputBox>
+            <button class="view-code" type="button" @onclick='() => ShowCode("gradient")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Input.Underline.Tag")</span><h3>@T("Demo.Input.Underline.Title")</h3><p>@T("Demo.Input.Underline.Description")</p>
+            <InputBox TValue="string" Title="@T("Demo.Input.Underline.Label")" Appearance="InputBoxAppearance.Underline" @bind-Value="project" />
+            <button class="view-code" type="button" @onclick='() => ShowCode("underline")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Input.Password.Tag")</span><h3>@T("Demo.Input.Password.Title")</h3><p>@T("Demo.Input.Password.Description")</p>
+            <InputBox TValue="string" Title="@T("Demo.Input.Password.Label")" Kind="InputBoxKind.Password" ShowPasswordStrength="true" MinimumPasswordLength="8" @bind-Value="password" />
+            <button class="view-code" type="button" @onclick='() => ShowCode("password")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Input.Counter.Tag")</span><h3>@T("Demo.Input.Counter.Title")</h3><p>@T("Demo.Input.Counter.Description")</p>
+            <InputBox TValue="string" Title="@T("Demo.Input.Counter.Label")" MaxLength="36" ShowCharacterCount="true" @bind-Value="note" />
+            <button class="view-code" type="button" @onclick='() => ShowCode("counter")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+</section>
+
+<section class="section" id="buttons">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Button.Eyebrow")</span><div><h2>Button</h2><p>@T("Demo.Button.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Button.Default.Tag")</span><h3>@T("Demo.Button.Default.Title")</h3><p>@T("Demo.Button.Default.Description")</p>
+            <div class="button-row"><Button Text="@T("Demo.Button.Default.Save")" OnAction="SaveAsync" ProcessingText="@T("Demo.Button.Default.Saving")" /><Button Text="@T("Demo.Button.Default.Learn")" Variant="ButtonVariant.Outline" OnAction="Confirm" /></div>
+            <button class="view-code" type="button" @onclick='() => ShowCode("default-button")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Button.Hold.Tag")</span><h3>@T("Demo.Button.Hold.Title")</h3><p>@T("Demo.Button.Hold.Description")</p>
+            <Button Mode="ButtonMode.HoldToConfirm" Color="ColorRole.Danger" Text="@T("Demo.Button.Hold.Delete")" SuccessText="@T("Demo.Button.Hold.Deleted")" OnAction="Confirm">
+                <Icon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v6m4-6v6" /></svg></Icon>
+                <SuccessIcon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg></SuccessIcon>
+            </Button>
+            <button class="view-code" type="button" @onclick='() => ShowCode("hold")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Button.Feedback.Tag")</span><h3>@T("Demo.Button.Feedback.Title")</h3><p>@T("Demo.Button.Feedback.Description")</p>
+            <Button Mode="ButtonMode.ActionFeedback" Text="@T("Demo.Button.Feedback.Send")" FeedbackText="@T("Demo.Button.Feedback.Sent")" OnAction="SaveAsync" />
+            <button class="view-code" type="button" @onclick='() => ShowCode("feedback")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Button.Slide.Tag")</span><h3>@T("Demo.Button.Slide.Title")</h3><p>@T("Demo.Button.Slide.Description")</p>
+            <Button Mode="ButtonMode.SlideToConfirm" Text="@T("Demo.Button.Slide.Approve")" SuccessText="@T("Demo.Button.Slide.Confirmed")" OnAction="Confirm" />
+            <button class="view-code" type="button" @onclick='() => ShowCode("slide")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+    <p class="demo-status" role="status">@Status</p>
+</section>
+
+<section class="section" id="tooltip">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Tooltip.Eyebrow")</span><div><h2>Tooltip</h2><p>@T("Demo.Tooltip.Description")</p></div></div>
+    <div class="card tooltip-card"><Tooltip Text="@T("Demo.Tooltip.Text")"><button class="hint-button" type="button">@T("Demo.Tooltip.Action")</button></Tooltip><p>@T("Demo.Tooltip.CardDescription")</p><button class="view-code" type="button" @onclick='() => ShowCode("tooltip")'>@T("Demo.Code.View")</button></div>
+</section>
+
+<section class="section" id="modal">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Modal.Eyebrow")</span><div><h2>Modal</h2><p>@T("Demo.Modal.Description")</p></div></div>
+    <div class="card tooltip-card"><Button Text="@T("Demo.Modal.Open")" OnAction="() => detailsOpen = true" /><p>@T("Demo.Modal.CardDescription")</p><button class="view-code" type="button" @onclick='() => ShowCode("modal")'>@T("Demo.Code.View")</button></div>
+</section>
+
+<Modal Title="@T("Demo.Example." + selectedKey)" Size="ModalSize.Large" @bind-IsOpen="codeOpen">
+    <p class="code-intro">@T("Demo.Code.Intro")</p>
+    <pre class="code-block"><code>@selectedCode</code></pre>
+</Modal>
+<Modal Title="@T("Demo.Modal.DetailsTitle")" Size="ModalSize.Compact" @bind-IsOpen="detailsOpen">
+    <p>@T("Demo.Modal.Body")</p>
+</Modal>
+
+@code {
+    private string? name, email, promo, project, password, note;
+    private bool codeOpen, detailsOpen;
+    private string selectedKey = "normal", selectedCode = "";
+    private string statusKey = "Demo.Status.Initial";
+    private string Status => Texts.Get(statusKey, new Dictionary<string, string> { ["promo"] = promo ?? "" });
+    private string T(string key) => Texts.Get(key);
+
+    private void ShowCode(string key)
+    {
+        selectedKey = key;
+        selectedCode = ExampleCatalog.Items[key].Code;
+        codeOpen = true;
+    }
+
+    private void Confirm() => statusKey = "Demo.Status.Completed";
+    private void ApplyPromo() => statusKey = "Demo.Status.Applied";
+    private async Task SaveAsync() { await Task.Delay(1200); statusKey = "Demo.Status.Saved"; }
+}

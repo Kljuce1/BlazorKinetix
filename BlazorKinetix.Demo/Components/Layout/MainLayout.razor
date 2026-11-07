@@ -1,0 +1,22 @@
+@inherits LayoutComponentBase
+@inject BlazorKinetix.Core.KinetixTexts Texts
+
+<header class="site-header">
+    <a class="brand" href="/">✦ <span>BlazorKinetix</span></a>
+    <nav aria-label="@T("Demo.Nav.Label")">
+        <a href="/#inputs">InputBox</a>
+        <a href="/#buttons">Button</a>
+        <a href="/#tooltip">Tooltip</a>
+        <a href="/#modal">Modal</a>
+        <a href="/docs">@T("Demo.Nav.Docs")</a>
+        <button class="language-switch" type="button" lang="@(Language == "es" ? "en" : "es")" aria-label="@T("Demo.Nav.SwitchLanguage")" onclick="blazorKinetixLanguage.set('@(Language == "es" ? "en" : "es")')"><span aria-hidden="true">🌐</span> @(Language == "es" ? "English" : "Español")</button>
+        <button class="theme-toggle" type="button" onclick="blazorKinetixTheme.toggle()" aria-label="@T("Demo.Nav.ToggleTheme")">◐ <span>@T("Demo.Nav.Theme")</span></button>
+    </nav>
+</header>
+<main>@Body</main>
+<footer class="site-footer"><span>BlazorKinetix</span><span>@T("Demo.Footer")</span></footer>
+
+@code {
+    private string Language => System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    private string T(string key) => Texts.Get(key);
+}
