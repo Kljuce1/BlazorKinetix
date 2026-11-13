@@ -1,0 +1,111 @@
+@namespace BlazorKinetix.Components
+@typeparam TValue
+@implements IDisposable
+@using System.Linq.Expressions
+@using Microsoft.AspNetCore.Components.Forms
+
+<div class="bk-form-field @(HasError ? "is-invalid" : null) @(IsModified ? "is-modified" : null) @CssClass">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label class="bk-form-field-label" for="@Context.InputId">
+            @Label@if (Required) {
+            <span class="bk-form-field-required" aria-hidden="true"> *</span>
+        }
+    </label>
+}
+<div class="bk-form-field-control">
+    @if (FieldTemplate is not null)
+    {
+        @FieldTemplate(Context)
+    }
+    else
+    {
+
+        @ChildContent
+    }
+</div>
+@if (!string.IsNullOrWhiteSpace(HelpText))
+{
+    <div id="@Context.HelpId" class="bk-form-field-help">@HelpText</div>
+}
+@if (ShowErrors)
+{
+    <div id="@Context.ErrorId" class="bk-form-field-errors" role="@(HasError ? "alert" : null)" hidden="@(!HasError)">
+        @foreach (var message in ErrorMessages)
+        {
+            <div>@message</div>
+        }
+    </div>
+}
+</div>
+
+@code {
+    /// <summary>Displays a label for the field.</summary>
+    [Parameter] public string? Label { get; set; }
+    /// <summary>Displays supporting text below the field.</summary>
+    [Parameter] public string? HelpText { get; set; }
+    /// <summary>Marks the label as required.</summary>
+    [Parameter] public bool Required { get; set; }
+    /// <summary>Identifies the field in an EditForm.</summary>
+    [Parameter] public Expression<Func<TValue>>? FieldExpression { get; set; }
+    /// <summary>Displays an explicit error message.</summary>
+    [Parameter] public string? ErrorText { get; set; }
+    /// <summary>Shows validation messages below the field.</summary>
+    [Parameter] public bool ShowErrors { get; set; } = true;
+    /// <summary>Shows every field error instead of only the first.</summary>
+    [Parameter] public bool ShowAllErrors { get; set; }
+    /// <summary>Sets the field input ID.</summary>
+    [Parameter] public string? InputId { get; set; }
+    /// <summary>Renders a field with access to its IDs.</summary>
+    [Parameter] public RenderFragment<FormFieldContext>? FieldTemplate { get; set; }
+    /// <summary>Renders field content when FieldTemplate is not set.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Adds CSS classes to the field root.</summary>
+    [Parameter] public string? CssClass { get; set; }
+    [CascadingParameter] private EditContext? EditContext { get; set; }
+
+    private readonly string generatedId = $"bk-field-{Guid.NewGuid():N}";
+    private EditContext? subscribedContext;
+    private FieldIdentifier? fieldIdentifier;
+    private FormFieldContext Context => new(InputId ?? generatedId, $"{InputId ?? generatedId}-help", $"{InputId ?? generatedId}-error");
+    private bool IsModified => fieldIdentifier is { } id && EditContext?.IsModified(id) == true;
+    private IReadOnlyList<string> ErrorMessages
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(ErrorText)) return [ErrorText];
+            if (fieldIdentifier is not { } id || EditContext is null) return [];
+            var messages = EditContext.GetValidationMessages(id);
+            return ShowAllErrors ? messages.ToArray() : messages.Take(1).ToArray();
+        }
+    }
+    private bool HasError => ShowErrors && ErrorMessages.Count > 0;
+
+    protected override void OnParametersSet()
+    {
+        fieldIdentifier = FieldExpression is null ? null : FieldIdentifier.Create(FieldExpression);
+        if (ReferenceEquals(subscribedContext, EditContext)) return;
+        if (subscribedContext is not null)
+        {
+            subscribedContext.OnValidationStateChanged -= ValidationChanged;
+            subscribedContext.OnFieldChanged -= FieldChanged;
+        }
+        subscribedContext = EditContext;
+        if (subscribedContext is not null)
+        {
+            subscribedContext.OnValidationStateChanged += ValidationChanged;
+            subscribedContext.OnFieldChanged += FieldChanged;
+        }
+    }
+
+    private void ValidationChanged(object? sender, ValidationStateChangedEventArgs args) => _ = InvokeAsync(StateHasChanged);
+    private void FieldChanged(object? sender, FieldChangedEventArgs args) => _ = InvokeAsync(StateHasChanged);
+
+    /// <summary>Releases EditForm event subscriptions.</summary>
+    public void Dispose()
+    {
+        if (subscribedContext is null) return;
+        subscribedContext.OnValidationStateChanged -= ValidationChanged;
+        subscribedContext.OnFieldChanged -= FieldChanged;
+    }
+}

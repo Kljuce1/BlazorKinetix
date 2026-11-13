@@ -1,0 +1,146 @@
+@namespace BlazorKinetix.Components
+@implements IDisposable
+
+<div class="bk-progress bk-progress-@Mode.ToString().ToLowerInvariant() @(IsComplete ? "is-complete" : null) @(IsRunning ? "is-running" : null) @(Items.Count > 0 ? "has-tasks" : null) @(showDoneIcon ? "is-done-visible" : null) @CssClass"
+     style="--bk-progress-percent:@PercentageText%;--bk-progress-fraction:@FractionText"
+     role="@(Items.Count > 0 ? null : "progressbar")"
+     aria-label="@(Items.Count > 0 ? null : AriaLabel ?? Label ?? "Progress")"
+     aria-valuemin="@(Items.Count > 0 ? null : "0")" aria-valuemax="@(Items.Count > 0 ? null : "100")" aria-valuenow="@(Items.Count > 0 ? null : PercentageText)">
+    @if (Mode == ProgressMode.Linear)
+    {
+        <div class="bk-progress-heading"><span class="bk-progress-heading-icon" aria-hidden="true">@IndicatorIcon</span><span>@(IsComplete ? CompletedText ?? Label : Label)</span><strong>@PercentageText%</strong></div>
+        <div class="bk-progress-track"><span class="bk-progress-fill"></span></div>
+    }
+    else
+    {
+        <div class="bk-progress-ring-row">
+            <div class="bk-progress-ring" role="@(Items.Count > 0 ? "progressbar" : null)"
+                 aria-label="@(Items.Count > 0 ? AriaLabel ?? Label ?? "Progress" : null)"
+                 aria-valuemin="@(Items.Count > 0 ? "0" : null)" aria-valuemax="@(Items.Count > 0 ? "100" : null)"
+                 aria-valuenow="@(Items.Count > 0 ? PercentageText : null)" aria-hidden="@(Items.Count > 0 ? null : "true")">
+                <svg class="bk-progress-ring-svg" viewBox="0 0 80 80"><circle class="bk-progress-ring-base" cx="40" cy="40" r="34" /><circle class="bk-progress-ring-fill" cx="40" cy="40" r="34" /></svg>
+                <span class="bk-progress-ring-icon">
+                    @if (Items.Count > 0 && !showDoneIcon)
+                    {
+                        <span class="bk-progress-count">@Items.Count(item => item.IsComplete)/@Items.Count</span>
+                    }
+                    else
+                    {
+
+                        @IndicatorIcon
+                    }
+                </span>
+            </div>
+            <div class="bk-progress-details">
+                <strong>@(IsComplete ? CompletedText ?? Label : Label)</strong>
+                @if (!string.IsNullOrWhiteSpace(Description))
+                {
+                    <span>@Description</span>
+                }
+                @if (Items.Count > 0)
+                {
+                    <small>@Items.Count(item => item.IsComplete)/@Items.Count</small>
+                }
+                else
+                {
+
+                    <small>@PercentageText%</small>
+                }
+            </div>
+        </div>
+        @if (Items.Count > 0)
+        {
+            <div class="bk-progress-tasks">
+                @foreach (var item in Items)
+                {
+                    <label class="bk-progress-task @(item.IsComplete ? "is-done" : null)"><input type="checkbox" checked="@item.IsComplete" disabled="@Disabled" @onchange="args => ChangeTask(item, args)" /><span>@item.Text</span></label>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    /// <summary>Sets the indicator layout.</summary>
+    [Parameter] public ProgressMode Mode { get; set; } = ProgressMode.Linear;
+    /// <summary>Sets the current progress value.</summary>
+    [Parameter] public double Value { get; set; }
+    /// <summary>Sets the value that completes the progress.</summary>
+    [Parameter] public double Max { get; set; } = 100;
+    /// <summary>Displays the progress label.</summary>
+    [Parameter] public string? Label { get; set; }
+    /// <summary>Displays the completed label.</summary>
+    [Parameter] public string? CompletedText { get; set; }
+    /// <summary>Displays supporting text beside the ring.</summary>
+    [Parameter] public string? Description { get; set; }
+    /// <summary>Labels the indicator for assistive technology.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Animates the initial icon while work is active.</summary>
+    [Parameter] public bool IsRunning { get; set; }
+    /// <summary>Displays custom initial icon markup.</summary>
+    [Parameter] public RenderFragment? Icon { get; set; }
+    /// <summary>Uses an icon class before completion.</summary>
+    [Parameter] public string? IconClass { get; set; }
+    /// <summary>Displays custom completed icon markup.</summary>
+    [Parameter] public RenderFragment? CompletedIcon { get; set; }
+    /// <summary>Uses an icon class after completion.</summary>
+    [Parameter] public string? CompletedIconClass { get; set; }
+    /// <summary>Counts completed tasks instead of using Value.</summary>
+    [Parameter] public IReadOnlyList<ProgressTaskItem> Items { get; set; } = [];
+    /// <summary>Replaces the completed task count with a check after the delay.</summary>
+    [Parameter] public bool ShowDone { get; set; }
+    /// <summary>Sets the delay before showing the completed task check.</summary>
+    [Parameter] public TimeSpan DoneDelay { get; set; } = TimeSpan.FromSeconds(1);
+    /// <summary>Runs when a task checkbox changes.</summary>
+    [Parameter] public EventCallback<ProgressTaskChange> OnTaskChanged { get; set; }
+    /// <summary>Disables task checkboxes.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Adds CSS classes to the indicator.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private double Fraction => Items.Count > 0 ? (double)Items.Count(item => item.IsComplete) / Items.Count : Max > 0 ? Math.Clamp(Value / Max, 0, 1) : 0;
+    private string FractionText => Fraction.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    private string PercentageText => Math.Round(Fraction * 100).ToString(System.Globalization.CultureInfo.InvariantCulture);
+    private bool IsComplete => Fraction >= 1;
+    private bool showDoneIcon;
+    private CancellationTokenSource? doneTimer;
+    private bool previousTasksComplete;
+
+    protected override void OnParametersSet()
+    {
+        var tasksComplete = Items.Count > 0 && IsComplete && ShowDone;
+        if (tasksComplete && !previousTasksComplete)
+        {
+            doneTimer?.Cancel();
+            doneTimer?.Dispose();
+            doneTimer = new CancellationTokenSource();
+            _ = ShowDoneLaterAsync(doneTimer.Token);
+        }
+        else if (!tasksComplete)
+        {
+            doneTimer?.Cancel();
+            doneTimer?.Dispose();
+            doneTimer = null;
+            showDoneIcon = false;
+        }
+        previousTasksComplete = tasksComplete;
+    }
+
+    private async Task ShowDoneLaterAsync(CancellationToken token)
+    {
+        try { await Task.Delay(DoneDelay, token); await InvokeAsync(() => { showDoneIcon = true; StateHasChanged(); }); }
+        catch (OperationCanceledException) { }
+    }
+    private RenderFragment IndicatorIcon => builder =>
+    {
+        if (IsComplete && CompletedIcon is not null) { builder.AddContent(0, CompletedIcon); return; }
+        if (IsComplete && !string.IsNullOrWhiteSpace(CompletedIconClass)) { builder.OpenElement(1, "i"); builder.AddAttribute(2, "class", CompletedIconClass); builder.CloseElement(); return; }
+        if (IsComplete) { builder.AddMarkupContent(3, "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round'><path d='m4 12 5 5L20 6'/></svg>"); return; }
+        if (Icon is not null) { builder.AddContent(4, Icon); return; }
+        if (!string.IsNullOrWhiteSpace(IconClass)) { builder.OpenElement(5, "i"); builder.AddAttribute(6, "class", IconClass); builder.CloseElement(); return; }
+        builder.AddMarkupContent(7, "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round'><path d='M12 3v12m-4-4 4 4 4-4M5 19h14'/></svg>");
+    };
+    private Task ChangeTask(ProgressTaskItem item, ChangeEventArgs args) => OnTaskChanged.InvokeAsync(new(item.Key, args.Value is true));
+    /// <summary>Cancels the completed task animation timer.</summary>
+    public void Dispose() { doneTimer?.Cancel(); doneTimer?.Dispose(); }
+}

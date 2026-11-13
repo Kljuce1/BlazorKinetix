@@ -1,6 +1,10 @@
 # BlazorKinetix
 
-Themeable controls for Blazor Server and WebAssembly. This preview includes `InputBox`, `Button`, `Tooltip`, `Modal`, `NavMenu`, `HorizontalDatePicker`, `DatePicker`, `DateRangePicker`, `TimePicker`, and `DateTimePicker`.
+Themeable controls for Blazor Server and WebAssembly, including inputs, file upload, actions, dialogs, navigation, tables, and date and time pickers.
+
+## Suggest a control
+
+Like the controls and want to see another one? [Tell us which control you would like added](https://github.com/Kljuce1/BlazorKinetix/issues/new). Suggestions and contributions are welcome.
 
 ## Run the examples
 
@@ -41,6 +45,22 @@ The host stylesheet imports the library's isolated styles automatically during t
 
 Email fields use `inputmode="email"` and the component's validation message. Set `NativeValidation="true"` to use the browser's email and required-field messages instead.
 
+## FileUpload
+
+```razor
+<FileUpload Label="Documents" Accept=".txt" Multiple="true"
+            MaxFiles="2" MaxFileSize="262144" AutoUpload="false"
+            UploadAsync="UploadAsync" />
+```
+
+`UploadAsync` receives an `IBrowserFile`, `IProgress<long>` for transferred bytes, and a `CancellationToken`. Set `AutoUpload="false"` to start with the control's Upload button or call `UploadAllAsync()` through `@ref`. `OnFilesChanged`, `OnUploaded`, and `OnUploadFailed` expose selection and result changes. Without `UploadAsync`, the component only selects files. `ShowPreviews` reads small JPEG, PNG, GIF, or WebP files into memory, capped by `MaxPreviewBytes` (512 KB by default). CSS variables include `--bk-file-upload-accent`, `--bk-file-upload-surface`, `--bk-file-upload-text`, and `--bk-file-upload-border`.
+
+Set strict `MaxFiles` and `MaxFileSize` limits. The `Accept` attribute and browser-supplied metadata are only preliminary checks; validate file size, content, and allowed types again in the receiving application. Open the stream with an explicit `OpenReadStream(maxAllowedSize, cancellationToken)` limit and stream it to trusted storage without buffering an unbounded file. The demo limits files to 1 MB or less and does not persist them.
+
+## Form validation
+
+`FormField<TValue>` wraps a native or custom input with a label, help text, and `EditContext` validation messages. `FieldExpression` selects the field, and `FieldTemplate` receives `InputId`, `HelpId`, and `ErrorId` for accessible markup. `Required` marks the label; define validation rules in the form. `FormValidationSummary` displays the form's errors; it can also show a success message with `ShowWhenValid`. Set `--bk-field-error`, `--bk-field-text`, and `--bk-summary-accent` from the host stylesheet. `InputBox` does not require `FormField` and continues to render its own errors.
+
 ## Button
 
 ```razor
@@ -66,7 +86,32 @@ To use Font Awesome, load its stylesheet in the host application and pass a clas
 
 Set colors and dimensions on a parent with `--bk-nav-accent`, `--bk-nav-surface`, `--bk-nav-text`, `--bk-nav-border`, `--bk-nav-active-background`, `--bk-nav-active-text`, `--bk-nav-hover`, `--bk-nav-width`, `--bk-nav-collapsed-width`, `--bk-nav-mobile-width`, and `--bk-nav-radius`. The defaults follow the host's `--bk-*` theme variables. `CssClass` adds a class to the root for further styling.
 
+## Pagination
+
+```razor
+<Pagination TotalItems="@totalCount" PageSizes="@(new[] { 10, 25, 50 })"
+            @bind-Page="page" @bind-PageSize="pageSize"
+            Loading="@loading" OnChange="LoadAsync" />
+```
+
+Pages are one-based. `OnChange` receives a `PaginationState` once per navigation or page-size change, making it suitable for API requests. Size changes return to page 1. Set `ShowPageNumbers="false"` for a compact page count; `ShowFirstLast`, `ShowRange`, and `MaxVisiblePages` control the rest of the layout. `PageSizes` is optional. Set `--bk-pagination-accent`, `--bk-pagination-surface`, `--bk-pagination-text`, and `--bk-pagination-border` from the host stylesheet.
+
+## DataTable
+
+```razor
+<DataTable TItem="Order" Items="@orders" Columns="@columns"
+           PageSizes="@(new[] { 10, 50, 100 })"
+           RowKey="order => order.Id" />
+```
+
+Each `DataTableColumn<TItem>` has a `Key`, `Header`, and `Value`. Set `Width`, `Visible`, `Sortable`, `SortValue`, `MobilePrimary`, `CssClass`, `HeaderCssClass`, or `CellTemplate` as needed. Set table `Culture` or a column's `Culture` and `Format` for numeric, currency, and date values; for example, `Format = "C", Culture = CultureInfo.GetCultureInfo("es-VE")`. A cell template receives `DataTableCellContext<TItem>` with the row, column, and value. Set `DetailTemplate` to render expanded content, including another `DataTable`; `HasDetails` can hide the expander on individual rows. Use `RowKey` for stable expansion state after sorting or paging.
+
+`Mode` supports `Full`, `Paged`, and `Infinite`. In `Auto` mode, `PageSizes` enables pagination. `ItemsProvider` accepts a `DataTableRequest` and cancellation token and returns `DataTableResult<TItem>`; paged providers should return `TotalCount`. Infinite mode appends pages near the scroll end and also provides a Load more button. `Loading` shows skeleton rows. `EmptyTemplate` overrides the default image and text empty state.
+
+At `MobileBreakpoint`, measured against the table container, rows become cards. Columns marked `MobilePrimary = false` remain available through Show more; `DetailTemplate` remains available through a separate detail button. Sortable columns appear in a mobile sort selector. `Height` and `Width` accept CSS lengths. Without `Height`, the table uses the parent height when that height is defined. Theme tokens include `--bk-table-surface`, `--bk-table-text`, `--bk-table-border`, `--bk-table-accent`, `--bk-table-header-background`, `--bk-table-header-text`, `--bk-table-row-hover`, `--bk-table-detail-background`, and `--bk-table-radius`.
+
 ## Dates and times
+
 
 
 ```razor
@@ -186,7 +231,7 @@ dotnet pack BlazorKinetix.Core -c Release
 dotnet pack BlazorKinetix.Components -c Release
 ```
 
-The `BlazorKinetix` package depends on `BlazorKinetix.Core`. Both are preview packages and have not been published.
+The `BlazorKinetix` package depends on `BlazorKinetix.Core`. NuGet publication is planned; use project references until the packages are available.
 
 ## Contributing
 

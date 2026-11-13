@@ -1,0 +1,60 @@
+@namespace BlazorKinetix.Components
+@implements IDisposable
+@using BlazorKinetix.Core
+@using Microsoft.AspNetCore.Components.Forms
+@inject KinetixTexts Texts
+
+@if (ShowWhenValid || Messages.Count > 0)
+{
+    <div class="bk-form-summary @(Messages.Count > 0 ? "is-invalid" : "is-valid") @CssClass" role="@(Messages.Count > 0 ? "alert" : "status")">
+        @if (Messages.Count > 0 || !string.IsNullOrWhiteSpace(Title))
+        {
+            <strong>@(Title ?? Texts.Get("Form.Errors"))</strong>
+        }
+        @if (Messages.Count > 0)
+        {
+            <ul>
+                @foreach (var message in Messages)
+                {
+                    <li>@message</li>
+                }
+            </ul>
+        }
+        else if (ShowWhenValid)
+        {
+
+            <p>@(ValidText ?? Texts.Get("Form.Valid"))</p>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>Displays a heading above the validation messages.</summary>
+    [Parameter] public string? Title { get; set; }
+    /// <summary>Displays text when the form has no errors.</summary>
+    [Parameter] public string? ValidText { get; set; }
+    /// <summary>Shows a success state when there are no errors.</summary>
+    [Parameter] public bool ShowWhenValid { get; set; }
+    /// <summary>Adds CSS classes to the summary root.</summary>
+    [Parameter] public string? CssClass { get; set; }
+    [CascadingParameter] private EditContext? EditContext { get; set; }
+
+    private EditContext? subscribedContext;
+    private IReadOnlyList<string> Messages => EditContext?.GetValidationMessages().Distinct().ToArray() ?? [];
+
+    protected override void OnParametersSet()
+    {
+        if (ReferenceEquals(subscribedContext, EditContext)) return;
+        if (subscribedContext is not null) subscribedContext.OnValidationStateChanged -= ValidationChanged;
+        subscribedContext = EditContext;
+        if (subscribedContext is not null) subscribedContext.OnValidationStateChanged += ValidationChanged;
+    }
+
+    private void ValidationChanged(object? sender, ValidationStateChangedEventArgs args) => _ = InvokeAsync(StateHasChanged);
+
+    /// <summary>Releases EditForm event subscriptions.</summary>
+    public void Dispose()
+    {
+        if (subscribedContext is not null) subscribedContext.OnValidationStateChanged -= ValidationChanged;
+    }
+}

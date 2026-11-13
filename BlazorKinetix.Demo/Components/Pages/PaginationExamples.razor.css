@@ -1,0 +1,115 @@
+.pagination-demo-card {
+    min-width: 0
+}
+
+.pagination-demo-results {
+    display: grid;
+    align-content: start;
+    gap: .45rem;
+    height: 17rem;
+    overflow-y: auto;
+    margin: 1rem 0;
+    padding: .1rem;
+    color: var(--bk-text,#e9eff8)
+}
+
+.pagination-demo-row {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-width: 0;
+    padding: .55rem .65rem;
+    border: 1px solid var(--bk-border,#cbd5df);
+    border-radius: .55rem;
+    background: var(--bk-surface,#1b2636);
+    color: var(--bk-text,#e9eff8)
+}
+
+.pagination-demo-row-mark {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    flex: none;
+    border-radius: .4rem;
+    background: var(--bk-soft-surface,#26364a);
+    color: var(--bk-primary,#66d3d5);
+    font-size: .75rem;
+    font-weight: 800
+}
+
+.pagination-demo-row-copy {
+    display: grid;
+    gap: .1rem;
+    min-width: 0;
+    flex: 1
+}
+
+    .pagination-demo-row-copy strong, .pagination-demo-row-copy small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap
+    }
+
+    .pagination-demo-row-copy strong {
+        font-size: .86rem
+    }
+
+    .pagination-demo-row-copy small {
+        color: var(--bk-muted,#aebbd0);
+        font-size: .73rem
+    }
+
+.pagination-demo-row-state {
+    flex: none;
+    padding: .2rem .4rem;
+    border-radius: 2rem;
+    background: color-mix(in srgb,var(--bk-primary,#66d3d5) 14%,transparent);
+    color: var(--bk-primary,#66d3d5);
+    font-size: .7rem;
+    font-weight: 700
+}
+
+.pagination-demo-results.is-loading {
+    place-items: center;
+    align-content: center
+}
+
+.pagination-demo-loading {
+    display: grid;
+    justify-items: center;
+    gap: .8rem;
+    color: var(--bk-muted,#aebbd0);
+    font-size: .9rem
+}
+
+.pagination-demo-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid var(--bk-border,#485a70);
+    border-top-color: var(--bk-primary,#66d3d5);
+    border-radius: 50%;
+    animation: pagination-demo-spin .7s linear infinite
+}
+
+@keyframes pagination-demo-spin {
+    to {
+        transform: rotate(360deg)
+    }
+}
+
+.pagination-demo-card ::deep .bk-pagination {
+    margin: 1rem 0 1.3rem
+}
+
+@media(max-width:420px) {
+    .pagination-demo-row-state {
+        display: none
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .pagination-demo-spinner {
+        animation: none
+    }
+}

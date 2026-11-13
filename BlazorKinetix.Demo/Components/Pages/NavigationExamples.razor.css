@@ -1,9 +1,60 @@
-.nav-demo-card{min-width:0}
-.nav-demo-stage{display:flex;align-items:flex-start;min-height:20rem;padding:1rem;border-radius:1rem;background:var(--bk-nav-demo-stage,var(--bk-soft-surface,#e9f0f2));overflow:visible}
-.nav-demo-stage ::deep .bk-nav-slot{--bk-nav-width:15rem;--bk-nav-collapsed-width:4.25rem}
-.nav-demo-violet{--bk-nav-accent:#6c4bc5;--bk-nav-active-background:#6c4bc5;--bk-nav-active-text:#fff;--bk-nav-hover:#6c4bc51c;--bk-nav-radius:.5rem;--bk-nav-width:16rem}
-.nav-demo-stage ::deep .demo-nav-icon{display:inline-block;width:1rem;height:1rem;border:2px solid currentColor;border-radius:.2rem}
-.nav-demo-stage ::deep .demo-nav-grid{box-shadow:inset 4px 0 currentColor}
-.nav-demo-stage ::deep .demo-nav-pulse{transform:rotate(45deg);border-radius:50%}
-.nav-demo-status{margin:.9rem 0 0;color:var(--bk-muted,#596c7c);font-size:.88rem}
-@media(max-width:800px){.nav-demo-stage{min-height:4.5rem}.nav-demo-stage ::deep .bk-nav-slot{width:auto}}
+.nav-demo-card {
+    min-width: 0
+}
+
+.nav-demo-stage {
+    display: flex;
+    align-items: flex-start;
+    min-height: 20rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: var(--bk-nav-demo-stage,var(--bk-soft-surface,#e9f0f2));
+    overflow: visible
+}
+
+    .nav-demo-stage ::deep .bk-nav-slot {
+        --bk-nav-width: 15rem;
+        --bk-nav-collapsed-width: 4.25rem
+    }
+
+.nav-demo-violet {
+    --bk-nav-accent: #6c4bc5;
+    --bk-nav-active-background: #6c4bc5;
+    --bk-nav-active-text: #fff;
+    --bk-nav-hover: #6c4bc51c;
+    --bk-nav-radius: .5rem;
+    --bk-nav-width: 16rem
+}
+
+.nav-demo-stage ::deep .demo-nav-icon {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid currentColor;
+    border-radius: .2rem
+}
+
+.nav-demo-stage ::deep .demo-nav-grid {
+    box-shadow: inset 4px 0 currentColor
+}
+
+.nav-demo-stage ::deep .demo-nav-pulse {
+    transform: rotate(45deg);
+    border-radius: 50%
+}
+
+.nav-demo-status {
+    margin: .9rem 0 0;
+    color: var(--bk-muted,#596c7c);
+    font-size: .88rem
+}
+
+@media(max-width:800px) {
+    .nav-demo-stage {
+        min-height: 4.5rem
+    }
+
+        .nav-demo-stage ::deep .bk-nav-slot {
+            width: auto
+        }
+}

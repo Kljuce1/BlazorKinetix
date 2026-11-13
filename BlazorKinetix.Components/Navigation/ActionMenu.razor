@@ -1,0 +1,129 @@
+@namespace BlazorKinetix.Components
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div class="bk-action-menu bk-action-menu-@Mode.ToString().ToLowerInvariant() @(string.IsNullOrWhiteSpace(TriggerText) ? null : "has-text") @(isOpen ? "is-open" : null) @CssClass" @ref="root">
+    <button class="bk-action-trigger" type="button" aria-label="@(AriaLabel ?? TriggerText ?? "Open menu")"
+            aria-expanded="@isOpen" aria-haspopup="menu" disabled="@Disabled" @onclick="Toggle">
+        @if (TriggerIcon is not null)
+        {
+            <span class="bk-action-trigger-icon">@TriggerIcon</span>
+        }
+        else if (!string.IsNullOrWhiteSpace(TriggerIconClass))
+        {
+
+            <i class="bk-action-trigger-icon @TriggerIconClass" aria-hidden="true"></i>
+        }
+        else if (!string.IsNullOrWhiteSpace(TriggerImageSrc))
+        {
+
+            <img class="bk-action-trigger-icon" src="@TriggerImageSrc" alt="" />
+        }
+        else if (string.IsNullOrWhiteSpace(TriggerText))
+        {
+
+            <span class="bk-action-plus" aria-hidden="true">+</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(TriggerText))
+        {
+            <span>@TriggerText</span>
+        }
+        @if (Mode == ActionMenuMode.Dropdown)
+        {
+            <svg class="bk-action-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 7 6 6 6-6" /></svg>
+        }
+    </button>
+    <div class="bk-action-items" role="menu" aria-label="@(MenuLabel ?? AriaLabel ?? TriggerText ?? "Actions")">
+        @for (var index = 0; index < Items.Count; index++)
+        {
+            var item = Items[index];
+            <div class="bk-action-position" style="--bk-action-index:@index;--bk-action-count:@Items.Count;@FanPosition(index)">
+                @if (!string.IsNullOrWhiteSpace(item.Href) && item.Enabled)
+                {
+                    <a class="bk-action-item" role="menuitem" href="@item.Href" tabindex="@(isOpen ? 0 : -1)" @onclick="() => Choose(item)">@ItemIcon(item)<span class="bk-action-label">@item.Text</span></a>
+                }
+                else
+                {
+                    <button class="bk-action-item" type="button" role="menuitem" disabled="@(!item.Enabled)" tabindex="@(isOpen ? 0 : -1)" @onclick="() => Choose(item)">@ItemIcon(item)<span class="bk-action-label">@item.Text</span></button>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>Sets the menu layout.</summary>
+    [Parameter] public ActionMenuMode Mode { get; set; } = ActionMenuMode.Dropdown;
+    /// <summary>Defines the menu actions.</summary>
+    [Parameter] public IReadOnlyList<ActionMenuItem> Items { get; set; } = [];
+    /// <summary>Displays text in the trigger.</summary>
+    [Parameter] public string? TriggerText { get; set; }
+    /// <summary>Displays custom trigger icon markup.</summary>
+    [Parameter] public RenderFragment? TriggerIcon { get; set; }
+    /// <summary>Uses an icon class in the trigger.</summary>
+    [Parameter] public string? TriggerIconClass { get; set; }
+    /// <summary>Uses an image in the trigger.</summary>
+    [Parameter] public string? TriggerImageSrc { get; set; }
+    /// <summary>Labels the trigger for assistive technology.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Labels the menu for assistive technology.</summary>
+    [Parameter] public string? MenuLabel { get; set; }
+    /// <summary>Disables the menu trigger.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Adds CSS classes to the menu root.</summary>
+    [Parameter] public string? CssClass { get; set; }
+    /// <summary>Runs when an action is chosen.</summary>
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+
+    private ElementReference root;
+    private IJSObjectReference? module;
+    private DotNetObjectReference<ActionMenu>? self;
+    private bool isOpen;
+
+    private RenderFragment ItemIcon(ActionMenuItem item) => builder =>
+    {
+        if (item.Icon is not null) { builder.OpenElement(0, "span"); builder.AddAttribute(1, "class", "bk-action-icon"); builder.AddContent(2, item.Icon); builder.CloseElement(); }
+        else if (!string.IsNullOrWhiteSpace(item.IconClass)) { builder.OpenElement(3, "i"); builder.AddAttribute(4, "class", "bk-action-icon " + item.IconClass); builder.CloseElement(); }
+        else if (!string.IsNullOrWhiteSpace(item.ImageSrc)) { builder.OpenElement(5, "img"); builder.AddAttribute(6, "class", "bk-action-icon"); builder.AddAttribute(7, "src", item.ImageSrc); builder.AddAttribute(8, "alt", ""); builder.CloseElement(); }
+        else { builder.OpenElement(9, "span"); builder.AddAttribute(10, "class", "bk-action-icon"); builder.AddAttribute(11, "aria-hidden", "true"); builder.AddContent(12, string.IsNullOrEmpty(item.Text) ? "•" : item.Text[..1].ToUpperInvariant()); builder.CloseElement(); }
+    };
+
+    private void Toggle() => isOpen = !isOpen;
+    private string FanPosition(int index)
+    {
+        if (Mode != ActionMenuMode.Fan) return "";
+        var angle = (205d + (130d * index / Math.Max(1, Items.Count - 1))) * Math.PI / 180d;
+        var x = 88d * Math.Cos(angle);
+        var y = 88d * Math.Sin(angle);
+        return $"--bk-action-x:{x.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;--bk-action-y:{y.ToString(System.Globalization.CultureInfo.InvariantCulture)}px";
+    }
+    private async Task Choose(ActionMenuItem item)
+    {
+        if (!item.Enabled) return;
+        isOpen = false;
+        await OnSelect.InvokeAsync(item.Key);
+    }
+
+    /// <summary>Closes the menu when focus moves away or Escape is pressed.</summary>
+    [JSInvokable] public Task CloseAsync() { isOpen = false; return InvokeAsync(StateHasChanged); }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorKinetix/action-menu.js");
+        self = DotNetObjectReference.Create(this);
+        await module.InvokeVoidAsync("initialize", root, self);
+    }
+
+    /// <summary>Releases the menu interaction module.</summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (module is not null)
+        {
+            try { await module.InvokeVoidAsync("dispose", root); await module.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
+        }
+        self?.Dispose();
+    }
+}

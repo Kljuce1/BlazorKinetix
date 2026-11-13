@@ -1,0 +1,118 @@
+@namespace BlazorKinetix.Components
+
+<div class="bk-tabs @CssClass">
+    <div class="bk-tabs-bar">
+        <div class="bk-tabs-list" role="tablist" aria-label="@AriaLabel">
+            @for (var index = 0; index < visibleOptions.Count; index++)
+            {
+                var option = visibleOptions[index];
+                var tabIndex = index;
+                <button @ref="tabButtons[option.Key]" id="@TabId(option.Key)" type="button" role="tab"
+                        class="bk-tabs-tab @(SelectedKey == option.Key ? "is-active" : null)"
+                        aria-selected="@(SelectedKey == option.Key)" aria-controls="@PanelId(option.Key)"
+                        tabindex="@(SelectedKey == option.Key ? 0 : -1)" disabled="@(!option.Enabled)"
+                        @onclick="() => Select(option.Key)" @onkeydown="args => HandleKeyDown(args, tabIndex)">
+                    @if (option.Icon is not null)
+                    {
+                        <span class="bk-tabs-icon" aria-hidden="true">@option.Icon</span>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(option.IconClass))
+                    {
+
+                        <i class="bk-tabs-icon @option.IconClass" aria-hidden="true"></i>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(option.ImageSrc))
+                    {
+
+                        <img class="bk-tabs-icon" src="@option.ImageSrc" alt="" />
+                    }
+                    <span>@option.Title</span>
+                </button>
+            }
+        </div>
+        @if (HeaderActions is not null)
+        {
+            <div class="bk-tabs-actions">@HeaderActions</div>
+        }
+    </div>
+    @if (KeepPanelsMounted)
+    {
+        @foreach (var option in visibleOptions)
+        {
+            <div id="@PanelId(option.Key)" class="bk-tabs-panel" role="tabpanel"
+                 aria-labelledby="@TabId(option.Key)" tabindex="0" hidden="@(SelectedKey != option.Key)">
+                @Content(option.Key)
+            </div>
+        }
+    }
+    else if (SelectedKey is not null)
+    {
+        <div id="@PanelId(SelectedKey)" class="bk-tabs-panel" role="tabpanel"
+             aria-labelledby="@TabId(SelectedKey)" tabindex="0">
+            @Content(SelectedKey)
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Defines the available tabs.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<TabOption> Items { get; set; } = [];
+    /// <summary>Renders the content for a tab key.</summary>
+    [Parameter, EditorRequired] public RenderFragment<string> Content { get; set; } = _ => _ => { };
+    /// <summary>Renders controls beside the tab list.</summary>
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+    /// <summary>Keeps inactive panels mounted while hiding them.</summary>
+    [Parameter] public bool KeepPanelsMounted { get; set; }
+    /// <summary>Labels the tab list for assistive technology.</summary>
+    [Parameter] public string AriaLabel { get; set; } = "Tabs";
+    /// <summary>Sets the selected tab key.</summary>
+    [Parameter] public string? ActiveKey { get; set; }
+    /// <summary>Runs when the selected tab changes.</summary>
+    [Parameter] public EventCallback<string> ActiveKeyChanged { get; set; }
+    /// <summary>Adds CSS classes to the tab control.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private readonly string controlId = $"bk-tabs-{Guid.NewGuid():N}";
+    private readonly Dictionary<string, ElementReference> tabButtons = [];
+    private IReadOnlyList<TabOption> visibleOptions = [];
+    private string? internalKey;
+    private string? SelectedKey => visibleOptions.Any(option => option.Key == (ActiveKey ?? internalKey) && option.Enabled)
+        ? ActiveKey ?? internalKey
+        : visibleOptions.FirstOrDefault(option => option.Enabled)?.Key;
+    private string TabId(string key) => $"{controlId}-tab-{KeyIndex(key)}";
+    private string PanelId(string key) => $"{controlId}-panel-{KeyIndex(key)}";
+    private int KeyIndex(string key)
+    {
+        for (var index = 0; index < visibleOptions.Count; index++)
+            if (visibleOptions[index].Key == key) return index;
+        return -1;
+    }
+
+    protected override void OnParametersSet() => visibleOptions = Items.Where(option => option.Visible).ToArray();
+
+    private async Task Select(string key)
+    {
+        if (!visibleOptions.Any(option => option.Key == key && option.Enabled) || SelectedKey == key) return;
+        internalKey = key;
+        await ActiveKeyChanged.InvokeAsync(key);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args, int index)
+    {
+        var enabled = visibleOptions.Where(option => option.Enabled).ToArray();
+        if (enabled.Length == 0) return;
+        var current = Array.FindIndex(enabled, option => option.Key == visibleOptions[index].Key);
+        var next = args.Key switch
+        {
+            "ArrowRight" => (current + 1) % enabled.Length,
+            "ArrowLeft" => (current - 1 + enabled.Length) % enabled.Length,
+            "Home" => 0,
+            "End" => enabled.Length - 1,
+            _ => -1
+        };
+        if (next < 0) return;
+        var key = enabled[next].Key;
+        await Select(key);
+        if (tabButtons.TryGetValue(key, out var button)) await button.FocusAsync();
+    }
+}

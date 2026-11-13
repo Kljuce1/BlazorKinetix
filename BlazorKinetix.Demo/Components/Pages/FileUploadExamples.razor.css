@@ -1,0 +1,7 @@
+.file-upload-demo-card {
+    min-width: 0
+}
+
+    .file-upload-demo-card ::deep .bk-file-upload {
+        margin: 1rem 0 1.5rem
+    }

@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>BlazorKinetix.Core</PackageId>
-    <Version>0.1.0-preview.1</Version>
+    <Version>0.1.0</Version>
     <Authors>Ivan</Authors>
     <Description>Shared types and text catalog for BlazorKinetix components.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

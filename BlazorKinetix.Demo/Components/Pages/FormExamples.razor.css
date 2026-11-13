@@ -1,0 +1,41 @@
+.form-demo-card {
+    min-width: 0
+}
+
+    .form-demo-card form {
+        display: grid;
+        gap: 1rem;
+        margin: 1rem 0
+    }
+
+    .form-demo-card ::deep .bk-form-field-control input {
+        width: 100%;
+        min-height: 2.7rem;
+        padding: .5rem .75rem;
+        border: 1px solid var(--bk-border,#cbd5df);
+        border-radius: .55rem;
+        background: var(--bk-surface,#fff);
+        color: var(--bk-text,#203044);
+        font: inherit
+    }
+
+        .form-demo-card ::deep .bk-form-field-control input:focus {
+            outline: 2px solid var(--bk-primary,#08777e);
+            outline-offset: 1px
+        }
+
+    .form-demo-card ::deep .bk-input-box {
+        margin: 1rem 0 1.5rem
+    }
+
+.form-demo-submit {
+    justify-self: start;
+    padding: .65rem 1rem;
+    border: 0;
+    border-radius: .55rem;
+    background: var(--bk-primary,#08777e);
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer
+}

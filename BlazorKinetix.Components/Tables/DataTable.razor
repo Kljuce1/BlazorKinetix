@@ -1,0 +1,464 @@
+@namespace BlazorKinetix.Components
+@typeparam TItem
+@using BlazorKinetix.Core
+@using Microsoft.JSInterop
+@using System.Globalization
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject KinetixTexts Texts
+
+<div class="bk-table @(isMobile ? "is-mobile" : "") @CssClass" style="@RootStyle" @ref="root" aria-busy="@(Loading || internalLoading ? "true" : "false")">
+    @if (isMobile && VisibleColumns.Any(column => column.Sortable))
+    {
+        <div class="bk-table-mobile-sort">
+            <label>
+                @T("Table.SortBy")
+                <select value="@sortKey" @onchange="ChangeMobileSort">
+                    <option value="">@T("Table.DefaultOrder")</option>@foreach (var column in VisibleColumns.Where(column => column.Sortable)) {
+                    <option value="@column.Key">@column.Header</option>
+                }
+            </select>
+        </label>
+        <button type="button" disabled="@(sortKey is null)" aria-label="@T("Table.ReverseSort")" title="@T("Table.ReverseSort")" @onclick="ReverseSort">@(descending ? "↓" : "↑")</button>
+    </div>
+}
+<div class="bk-table-scroll">
+    @if (Loading || internalLoading && CurrentRows.Count == 0)
+    {
+        <div class="bk-table-skeleton" role="status" aria-label="@T("Table.Loading")">
+            @for (var i = 0; i < Math.Max(1, SkeletonRows); i++)
+            {
+                <div class="bk-table-skeleton-row"><span></span><span></span><span></span></div>
+            }
+            <span class="bk-table-sr-only">@T("Table.Loading")</span>
+        </div>
+    }
+    else if (loadError is not null)
+    {
+        <div class="bk-table-state" role="alert"><p>@(ErrorText ?? T("Table.Error"))</p><button type="button" @onclick="RefreshAsync">@T("Table.Retry")</button></div>
+    }
+    else if (CurrentRows.Count == 0)
+    {
+        <div class="bk-table-state">
+            @if (EmptyTemplate is not null)
+            {
+                @EmptyTemplate
+            }
+            else
+            {
+                @if (!string.IsNullOrWhiteSpace(EmptyImage))
+                {
+                    <picture>
+                        @if (!string.IsNullOrWhiteSpace(EmptyImageWebpSrcSet))
+                        {
+                            <source type="image/webp" srcset="@EmptyImageWebpSrcSet" />
+                        }
+                        <img src="@EmptyImage" alt="" loading="lazy" />
+                    </picture>
+                }
+                <p>@(EmptyText ?? T("Table.Empty"))</p>
+            }
+        </div>
+    }
+    else if (isMobile)
+    {
+        <div class="bk-table-cards" role="list" aria-label="@Caption">
+            @foreach (var item in CurrentRows)
+            {
+                var key = GetRowKey(item);
+                <article class="bk-table-card" role="listitem" @key="key">
+                    <div class="bk-table-card-fields">
+                        @foreach (var column in PrimaryColumns)
+                        {
+                            <div class="bk-table-card-field @column.CssClass"><strong>@column.Header</strong><div>@Cell(column, item)</div></div>
+                        }
+                        @if (MoreIsOpen(item))
+                        {
+                            @foreach (var column in SecondaryColumns)
+                            {
+                                <div class="bk-table-card-field @column.CssClass"><strong>@column.Header</strong><div>@Cell(column, item)</div></div>
+                            }
+                        }
+                    </div>
+                    @if (SecondaryColumns.Count > 0 || HasDetail(item) || Actions is not null)
+                    {
+                        <div class="bk-table-card-actions">
+                            @if (SecondaryColumns.Count > 0)
+                            {
+                                <button type="button" aria-expanded="@(MoreIsOpen(item) ? "true" : "false")" @onclick="() => ToggleMore(item)">@(MoreIsOpen(item) ? T("Table.Less") : T("Table.More"))</button>
+                            }
+                            @if (HasDetail(item))
+                            {
+                                <button type="button" aria-expanded="@(IsExpanded(item) ? "true" : "false")" @onclick="() => ToggleDetail(item)">@(IsExpanded(item) ? T("Table.HideDetail") : T("Table.ShowDetail"))</button>
+                            }
+                            @if (Actions is not null)
+                            {
+                                <div class="bk-table-actions">@Actions(item)</div>
+                            }
+                        </div>
+                    }
+                    @if (HasDetail(item) && IsExpanded(item))
+                    {
+                        <div class="bk-table-card-detail">@DetailTemplate!(item)</div>
+                    }
+                </article>
+            }
+        </div>
+    }
+    else
+    {
+        <table aria-label="@Caption">
+            <colgroup>
+                @if (DetailTemplate is not null)
+                {
+                    <col class="bk-table-expand-col" />
+                }
+                @foreach (var column in VisibleColumns)
+                {
+                    <col style="@ColumnWidth(column)" />
+                }
+                @if (Actions is not null)
+                {
+                    <col class="bk-table-actions-col" />
+                }
+            </colgroup>
+            <thead class="@(ShowHeader ? "" : "bk-table-sr-only")">
+                <tr>
+                    @if (DetailTemplate is not null)
+                    {
+                        <th scope="col"><span class="bk-table-sr-only">@T("Table.Details")</span></th>
+                    }
+                    @foreach (var column in VisibleColumns)
+                    {
+                        <th scope="col" class="@column.HeaderCssClass" style="@ColumnWidth(column)" aria-sort="@SortAria(column)">
+                            @if (column.Sortable)
+                            {
+                                <button type="button" class="bk-table-sort-button" @onclick="() => Sort(column)">@column.Header <span aria-hidden="true">@(sortKey == column.Key ? descending ? "↓" : "↑" : "↕")</span></button>
+                            }
+                            else
+                            {
+
+                                @column.Header
+                            }
+                        </th>
+                    }
+                    @if (Actions is not null)
+                    {
+                        <th scope="col">@(ActionsHeader ?? T("Table.Actions"))</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in CurrentRows)
+                {
+                    <tr @key="GetRowKey(item)">
+                        @if (DetailTemplate is not null)
+                        {
+                            <td class="bk-table-expand-cell">
+                                @if (HasDetail(item))
+                                {
+                                    <button type="button" class="bk-table-expand" aria-label="@(IsExpanded(item) ? T("Table.HideDetail") : T("Table.ShowDetail"))" aria-expanded="@(IsExpanded(item) ? "true" : "false")" @onclick="() => ToggleDetail(item)"><span aria-hidden="true">@(IsExpanded(item) ? "▾" : "▸")</span></button>
+                                }
+                            </td>
+                        }
+                        @foreach (var column in VisibleColumns)
+                        {
+                            <td class="@column.CssClass" data-label="@column.Header">@Cell(column, item)</td>
+                        }
+                        @if (Actions is not null)
+                        {
+                            <td class="bk-table-actions" data-label="@(ActionsHeader ?? T("Table.Actions"))">@Actions(item)</td>
+                        }
+                    </tr>
+                    @if (HasDetail(item) && IsExpanded(item))
+                    {
+                        <tr class="bk-table-detail-row"><td colspan="@ColumnCount">@DetailTemplate!(item)</td></tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    @if (EffectiveMode == DataTableLoadMode.Infinite)
+    {
+        <div class="bk-table-sentinel" @ref="sentinel"></div>
+        @if (CanLoadMore)
+        {
+            <button type="button" class="bk-table-load-more" disabled="@internalLoading" @onclick="LoadNextAsync">@(internalLoading ? T("Table.Loading") : T("Table.LoadMore"))</button>
+        }
+    }
+</div>
+@if (EffectiveMode == DataTableLoadMode.Paged && loadError is null)
+{
+    <footer class="bk-table-pager">
+        <span role="status">@T("Table.Showing") @RangeStart–@RangeEnd @T("Table.Of") @TotalCount @T("Table.Items")</span>
+        <div class="bk-table-page-controls">
+            <label>
+                <span class="bk-table-rows-long">@T("Table.RowsPerPage")</span><span class="bk-table-rows-short">@T("Table.RowsShort")</span>
+                <select value="@pageSize" @onchange="ChangePageSize">
+                    @foreach (var size in ValidPageSizes)
+                    {
+                        <option value="@size">@size</option>
+                    }
+                </select>
+            </label>
+            <button type="button" disabled="@(pageIndex == 0 || internalLoading)" aria-label="@T("Table.Previous")" @onclick="PreviousPage">‹</button>
+            <span class="bk-table-page-count">@(pageIndex + 1) / @Math.Max(1, PageCount)</span>
+            <button type="button" disabled="@(pageIndex + 1 >= PageCount || internalLoading)" aria-label="@T("Table.Next")" @onclick="NextPage">›</button>
+        </div>
+    </footer>
+}
+</div>
+
+@code {
+    /// <summary>Displays local rows.</summary>
+    [Parameter] public IReadOnlyList<TItem> Items { get; set; } = [];
+    /// <summary>Defines visible and sortable columns.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<DataTableColumn<TItem>> Columns { get; set; } = [];
+    /// <summary>Loads rows from an external source.</summary>
+    [Parameter] public Func<DataTableRequest, CancellationToken, Task<DataTableResult<TItem>>>? ItemsProvider { get; set; }
+    /// <summary>Selects full, paged, or incremental loading.</summary>
+    [Parameter] public DataTableLoadMode Mode { get; set; } = DataTableLoadMode.Auto;
+    /// <summary>Offers page sizes and enables pagination in Auto mode.</summary>
+    [Parameter] public IReadOnlyList<int> PageSizes { get; set; } = [];
+    /// <summary>Displays row actions.</summary>
+    [Parameter] public RenderFragment<TItem>? Actions { get; set; }
+    /// <summary>Displays the actions column heading.</summary>
+    [Parameter] public string? ActionsHeader { get; set; }
+    /// <summary>Displays expanded content below a row.</summary>
+    [Parameter] public RenderFragment<TItem>? DetailTemplate { get; set; }
+    /// <summary>Determines whether a row has expanded content.</summary>
+    [Parameter] public Func<TItem, bool>? HasDetails { get; set; }
+    /// <summary>Identifies rows across sorting and paging.</summary>
+    [Parameter] public Func<TItem, object>? RowKey { get; set; }
+    /// <summary>Displays a custom empty state.</summary>
+    [Parameter] public RenderFragment? EmptyTemplate { get; set; }
+    /// <summary>Displays text when there are no rows.</summary>
+    [Parameter] public string? EmptyText { get; set; }
+    /// <summary>Displays an image when there are no rows.</summary>
+    [Parameter] public string? EmptyImage { get; set; }
+    /// <summary>Offers a WebP source for the empty image.</summary>
+    [Parameter] public string? EmptyImageWebpSrcSet { get; set; }
+    /// <summary>Displays text after a data source fails.</summary>
+    [Parameter] public string? ErrorText { get; set; }
+    /// <summary>Shows placeholder rows while loading.</summary>
+    [Parameter] public bool Loading { get; set; }
+    /// <summary>Sets the number of placeholder rows.</summary>
+    [Parameter] public int SkeletonRows { get; set; } = 5;
+    /// <summary>Shows or visually hides the heading row.</summary>
+    [Parameter] public bool ShowHeader { get; set; } = true;
+    /// <summary>Sets the table width.</summary>
+    [Parameter] public string? Width { get; set; }
+    /// <summary>Sets the table height.</summary>
+    [Parameter] public string? Height { get; set; }
+    /// <summary>Sets the container width at which cards appear.</summary>
+    [Parameter] public int MobileBreakpoint { get; set; } = 640;
+    /// <summary>Sets the accessible table label.</summary>
+    [Parameter] public string? Caption { get; set; }
+    /// <summary>Formats values without a column culture.</summary>
+    [Parameter] public CultureInfo? Culture { get; set; }
+    /// <summary>Adds a CSS class to the table root.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private ElementReference root, sentinel;
+    private IJSObjectReference? module;
+    private DotNetObjectReference<DataTable<TItem>>? self;
+    private CancellationTokenSource? requestCancellation;
+    private Func<DataTableRequest, CancellationToken, Task<DataTableResult<TItem>>>? previousProvider;
+    private IReadOnlyList<TItem>? previousItems;
+    private DataTableLoadMode previousMode;
+    private readonly HashSet<object> expanded = [], more = [];
+    private IReadOnlyList<TItem> remoteItems = [];
+    private bool isMobile, internalLoading, hasMore = true;
+    private string? sortKey, loadError;
+    private bool descending;
+    private int pageIndex, pageSize = 10, loadedCount = 10;
+    private int? remoteTotal;
+    private string T(string key) => Texts.Get(key);
+    private DataTableLoadMode EffectiveMode => Mode == DataTableLoadMode.Auto ? PageSizes.Count > 0 || ItemsProvider is not null ? DataTableLoadMode.Paged : DataTableLoadMode.Full : Mode;
+    private IReadOnlyList<DataTableColumn<TItem>> VisibleColumns => Columns.Where(column => column.Visible).ToArray();
+    private IReadOnlyList<DataTableColumn<TItem>> PrimaryColumns => VisibleColumns.Where(column => column.MobilePrimary).ToArray();
+    private IReadOnlyList<DataTableColumn<TItem>> SecondaryColumns => VisibleColumns.Where(column => !column.MobilePrimary).ToArray();
+    private IReadOnlyList<int> ValidPageSizes => PageSizes.Where(size => size > 0).Distinct().ToArray() is { Length: > 0 } sizes ? sizes : [10, 50, 100];
+    private int ColumnCount => VisibleColumns.Count + (DetailTemplate is null ? 0 : 1) + (Actions is null ? 0 : 1);
+    private string RootStyle => $"width:{Width ?? "100%"};height:{Height ?? "100%"}";
+    private int TotalCount => ItemsProvider is null ? Items.Count : remoteTotal ?? remoteItems.Count;
+    private int PageCount => (int)Math.Ceiling((double)TotalCount / pageSize);
+    private int RangeStart => TotalCount == 0 ? 0 : pageIndex * pageSize + 1;
+    private int RangeEnd => ItemsProvider is null ? Math.Min((pageIndex + 1) * pageSize, TotalCount) : Math.Min(pageIndex * pageSize + remoteItems.Count, TotalCount);
+    private bool CanLoadMore => EffectiveMode == DataTableLoadMode.Infinite && (ItemsProvider is null ? loadedCount < Items.Count : hasMore);
+    private IReadOnlyList<TItem> CurrentRows
+    {
+        get
+        {
+            if (ItemsProvider is not null) return remoteItems;
+            var rows = SortedLocalRows();
+            return EffectiveMode switch
+            {
+                DataTableLoadMode.Paged => rows.Skip(pageIndex * pageSize).Take(pageSize).ToArray(),
+                DataTableLoadMode.Infinite => rows.Take(loadedCount).ToArray(),
+                _ => rows
+            };
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var size = ValidPageSizes[0];
+        var sourceChanged = previousMode != EffectiveMode || !Equals(previousProvider, ItemsProvider);
+        var itemsChanged = !ReferenceEquals(previousItems, Items);
+        previousItems = Items;
+        if (sourceChanged)
+        {
+            previousMode = EffectiveMode;
+            previousProvider = ItemsProvider;
+            pageSize = size;
+            pageIndex = 0;
+            loadedCount = size;
+            if (ItemsProvider is not null) await LoadRemoteAsync(false);
+        }
+        else if (ItemsProvider is null && itemsChanged)
+        {
+            pageIndex = 0;
+            loadedCount = pageSize;
+            expanded.Clear();
+            more.Clear();
+        }
+        if (!ValidPageSizes.Contains(pageSize)) pageSize = size;
+        if (ItemsProvider is null && EffectiveMode == DataTableLoadMode.Paged && pageIndex >= PageCount)
+            pageIndex = Math.Max(0, PageCount - 1);
+    }
+
+    private IReadOnlyList<TItem> SortedLocalRows()
+    {
+        var column = VisibleColumns.FirstOrDefault(column => column.Key == sortKey && column.Sortable);
+        if (column is null) return Items;
+        return (descending ? Items.OrderByDescending(item => column.SortValue?.Invoke(item) ?? column.Value(item), CellComparer.Instance)
+            : Items.OrderBy(item => column.SortValue?.Invoke(item) ?? column.Value(item), CellComparer.Instance)).ToArray();
+    }
+
+    private sealed class CellComparer : IComparer<object?>
+    {
+        public static readonly CellComparer Instance = new();
+        public int Compare(object? x, object? y)
+        {
+            if (ReferenceEquals(x, y)) return 0;
+            if (x is null) return -1;
+            if (y is null) return 1;
+            if (x is IComparable comparable)
+            {
+                try { return comparable.CompareTo(y); }
+                catch (ArgumentException) { }
+            }
+            return StringComparer.CurrentCultureIgnoreCase.Compare(x.ToString(), y.ToString());
+        }
+    }
+
+    private RenderFragment Cell(DataTableColumn<TItem> column, TItem item) => builder =>
+    {
+        var value = column.Value(item);
+        if (column.CellTemplate is not null) builder.AddContent(0, column.CellTemplate(new(item, column, value)));
+        else builder.AddContent(1, value is IFormattable formatted ? formatted.ToString(column.Format, column.Culture ?? Culture ?? CultureInfo.CurrentCulture) : value?.ToString());
+    };
+    private static string? ColumnWidth(DataTableColumn<TItem> column) => string.IsNullOrWhiteSpace(column.Width) ? null : $"width:{column.Width}";
+    private string? SortAria(DataTableColumn<TItem> column) => column.Sortable ? sortKey == column.Key ? descending ? "descending" : "ascending" : "none" : null;
+    private object GetRowKey(TItem item) => RowKey?.Invoke(item) ?? item!;
+    private bool HasDetail(TItem item) => DetailTemplate is not null && (HasDetails?.Invoke(item) ?? true);
+    private bool IsExpanded(TItem item) => expanded.Contains(GetRowKey(item));
+    private bool MoreIsOpen(TItem item) => more.Contains(GetRowKey(item));
+    private void ToggleDetail(TItem item) { var key = GetRowKey(item); if (!expanded.Add(key)) expanded.Remove(key); }
+    private void ToggleMore(TItem item) { var key = GetRowKey(item); if (!more.Add(key)) more.Remove(key); }
+
+    private async Task Sort(DataTableColumn<TItem> column)
+    {
+        if (!column.Sortable) return;
+        descending = sortKey == column.Key && !descending;
+        sortKey = column.Key;
+        await ResetViewAsync();
+    }
+    private async Task ChangeMobileSort(ChangeEventArgs args)
+    {
+        sortKey = args.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(sortKey)) sortKey = null;
+        descending = false;
+        await ResetViewAsync();
+    }
+    private async Task ReverseSort() { descending = !descending; await ResetViewAsync(); }
+    private async Task ResetViewAsync()
+    {
+        pageIndex = 0;
+        loadedCount = pageSize;
+        expanded.Clear();
+        more.Clear();
+        if (ItemsProvider is not null) await LoadRemoteAsync(false);
+    }
+    private async Task ChangePageSize(ChangeEventArgs args)
+    {
+        if (!int.TryParse(args.Value?.ToString(), out var size) || !ValidPageSizes.Contains(size)) return;
+        pageSize = size;
+        await ResetViewAsync();
+    }
+    private async Task PreviousPage() { if (pageIndex > 0) { pageIndex--; if (ItemsProvider is not null) await LoadRemoteAsync(false); } }
+    private async Task NextPage() { if (pageIndex + 1 < PageCount) { pageIndex++; if (ItemsProvider is not null) await LoadRemoteAsync(false); } }
+    private async Task LoadNextAsync()
+    {
+        if (!CanLoadMore || internalLoading) return;
+        if (ItemsProvider is null) loadedCount += pageSize;
+        else await LoadRemoteAsync(true);
+    }
+
+    private async Task LoadRemoteAsync(bool append)
+    {
+        if (ItemsProvider is null) return;
+        requestCancellation?.Cancel();
+        requestCancellation?.Dispose();
+        var cancellation = requestCancellation = new CancellationTokenSource();
+        internalLoading = true;
+        loadError = null;
+        try
+        {
+            var offset = append ? remoteItems.Count : pageIndex * pageSize;
+            var count = EffectiveMode == DataTableLoadMode.Full ? int.MaxValue : pageSize;
+            var result = await ItemsProvider(new(offset, count, sortKey, descending), cancellation.Token);
+            if (cancellation.IsCancellationRequested) return;
+            remoteItems = append ? remoteItems.Concat(result.Items).ToArray() : result.Items;
+            remoteTotal = result.TotalCount;
+            hasMore = result.HasMore ?? (result.TotalCount is int total ? remoteItems.Count < total : result.Items.Count == count);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+        catch (Exception ex) { loadError = ex.Message; }
+        finally { if (ReferenceEquals(requestCancellation, cancellation)) internalLoading = false; }
+    }
+
+    /// <summary>Reloads rows from the current data source.</summary>
+    public async Task RefreshAsync()
+    {
+        await ResetViewAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>Switches between table and card layouts when its container changes.</summary>
+    [JSInvokable] public Task OnViewportChange(bool mobile) { if (isMobile == mobile) return Task.CompletedTask; isMobile = mobile; return InvokeAsync(StateHasChanged); }
+    /// <summary>Loads more rows when the scroll end becomes visible.</summary>
+    [JSInvokable] public Task OnReachEnd() => InvokeAsync(async () => { await LoadNextAsync(); StateHasChanged(); });
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorKinetix/data-table.js");
+        self = DotNetObjectReference.Create(this);
+        await module.InvokeVoidAsync("initialize", root, sentinel, self, MobileBreakpoint);
+    }
+
+    /// <summary>Releases the table observers and pending request.</summary>
+    public async ValueTask DisposeAsync()
+    {
+        requestCancellation?.Cancel();
+        requestCancellation?.Dispose();
+        if (module is not null)
+        {
+            try { await module.InvokeVoidAsync("dispose", root); await module.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
+        }
+        self?.Dispose();
+    }
+}

@@ -1,0 +1,104 @@
+@inject KinetixTexts Texts
+@inject ToastService Toasts
+
+<section class="section" id="action-menu">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Motion.Menu.Eyebrow")</span><div><h2>ActionMenu</h2><p>@T("Demo.Motion.Menu.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card motion-card">
+            <span class="eyebrow">MENU / 03</span><h3>@T("Demo.Motion.Fan.Title")</h3><p>@T("Demo.Motion.Fan.Description")</p>
+            <div class="motion-fan-stage"><ActionMenu Mode="ActionMenuMode.Fan" Items="@MenuItems" AriaLabel="@T("Demo.Motion.Fan.Title")" OnSelect="ChooseMenu" /></div>
+            <p class="motion-status">@T("Demo.Motion.Menu.Selected"): @menuChoice</p>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("menu-fan")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card motion-card">
+            <span class="eyebrow">MENU / 05</span><h3>@T("Demo.Motion.Dropdown.Title")</h3><p>@T("Demo.Motion.Dropdown.Description")</p>
+            <div class="motion-dropdown-stage"><ActionMenu Mode="ActionMenuMode.Dropdown" Items="@MenuItems" TriggerText="@T("Demo.Motion.Dropdown.Trigger")" TriggerIcon="@MenuIcon" OnSelect="ChooseMenu" /></div>
+            <p class="motion-status">@T("Demo.Motion.Menu.Selected"): @menuChoice</p>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("menu-dropdown")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+</section>
+
+<section class="section" id="progress">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Motion.Progress.Eyebrow")</span><div><h2>ProgressIndicator</h2><p>@T("Demo.Motion.Progress.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card motion-card">
+            <span class="eyebrow">DONE / 06</span><h3>@T("Demo.Motion.Linear.Title")</h3><p>@T("Demo.Motion.Linear.Description")</p>
+            <div class="motion-progress-stage"><ProgressIndicator Value="@linearProgress" Label="@T("Demo.Motion.Linear.Working")" CompletedText="@T("Demo.Motion.Linear.Done")" CssClass="demo-gradient-progress" /></div>
+            <button class="motion-control" type="button" disabled="@linearRunning" @onclick="RunLinear">@T("Demo.Motion.Start")</button>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("progress-linear")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card motion-card">
+            <span class="eyebrow">DONE / 05</span><h3>@T("Demo.Motion.Ring.Title")</h3><p>@T("Demo.Motion.Ring.Description")</p>
+            <div class="motion-progress-stage"><ProgressIndicator Mode="ProgressMode.Ring" Value="@downloadProgress" IsRunning="@downloadRunning" Label="photo.zip" Description="@(downloadProgress == 100 ? null : T("Demo.Motion.Ring.Working"))" CompletedText="@T("Demo.Motion.Ring.Done")" CssClass="demo-gradient-progress" /></div>
+            <button class="motion-control" type="button" disabled="@downloadRunning" @onclick="RunDownload">@T("Demo.Motion.Start")</button>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("progress-ring")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card motion-card">
+            <span class="eyebrow">CHECKBOX / 04</span><h3>@T("Demo.Motion.Checklist.Title")</h3><p>@T("Demo.Motion.Checklist.Description")</p>
+            <div class="motion-progress-stage"><ProgressIndicator Mode="ProgressMode.Ring" Items="@tasks" OnTaskChanged="ChangeTask" ShowDone="true" Label="@T("Demo.Motion.Checklist.Working")" CompletedText="@T("Demo.Motion.Checklist.Done")" /></div>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("progress-checklist")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+</section>
+
+<section class="section" id="toast">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Motion.Toast.Eyebrow")</span><div><h2>Toast</h2><p>@T("Demo.Motion.Toast.Description")</p></div></div>
+    <div class="card motion-card">
+        <span class="eyebrow">DONE / 03</span><h3>@T("Demo.Motion.Toast.Title")</h3><p>@T("Demo.Motion.Toast.CardDescription")</p>
+        <div class="motion-toast-actions">
+            <button type="button" @onclick="() => ShowToast(ToastState.Success)">@T("Demo.Motion.Toast.Success")</button>
+            <button type="button" @onclick="() => ShowToast(ToastState.Info)">@T("Demo.Motion.Toast.Info")</button>
+            <button type="button" @onclick="() => ShowToast(ToastState.Warning)">@T("Demo.Motion.Toast.Warning")</button>
+            <button type="button" @onclick="() => ShowToast(ToastState.Danger)">@T("Demo.Motion.Toast.Danger")</button>
+            <button type="button" @onclick="() => ShowToast(ToastState.Custom)">@T("Demo.Motion.Toast.Custom")</button>
+        </div>
+        <ToastHost />
+        <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("toast")'>@T("Demo.Code.View")</button>
+    </div>
+</section>
+
+@code {
+    [Parameter] public EventCallback<string> OnShowCode { get; set; }
+    private string T(string key) => Texts.Get(key);
+    private string menuChoice = "—";
+    private RenderFragment MenuIcon => @<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>;
+    private RenderFragment EditIcon => @<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 20 4-.8L20 7l-3-3L5 16zM14.5 6.5l3 3" /></svg>;
+    private RenderFragment ShareIcon => @<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="2" /><circle cx="6" cy="12" r="2" /><circle cx="18" cy="19" r="2" /><path d="m8 11 8-5M8 13l8 5" /></svg>;
+    private RenderFragment SaveIcon => @<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h13l3 3v13H4zM8 4v6h8V4M8 20v-7h8v7" /></svg>;
+    //private RenderFragment MoreIcon => @<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>;
+    private IReadOnlyList<ActionMenuItem> MenuItems => [
+        new("edit", T("Demo.Motion.Menu.Edit"), Icon: EditIcon),
+        new("share", T("Demo.Motion.Menu.Share"), Icon: ShareIcon),
+        new("save", T("Demo.Motion.Menu.Save"), Icon: SaveIcon),
+        new("more", T("Demo.Motion.Menu.More"), IconClass: "fa-solid fa-check") //Icon: MoreIcon
+    ];
+    private void ChooseMenu(string key) => menuChoice = MenuItems.First(item => item.Key == key).Text;
+    private int linearProgress, downloadProgress;
+    private bool linearRunning, downloadRunning;
+    private async Task RunLinear()
+    {
+        linearRunning = true; linearProgress = 0;
+        for (var i = 0; i <= 10; i++) { linearProgress = i * 10; await Task.Delay(150); StateHasChanged(); }
+        linearRunning = false;
+    }
+    private async Task RunDownload()
+    {
+        downloadRunning = true; downloadProgress = 0;
+        for (var i = 0; i <= 10; i++) { downloadProgress = i * 10; await Task.Delay(180); StateHasChanged(); }
+        downloadRunning = false;
+    }
+    private IReadOnlyList<ProgressTaskItem> tasks = [new("design", "Design"), new("build", "Build"), new("ship", "Ship")];
+    private void ChangeTask(ProgressTaskChange change) => tasks = tasks.Select(item => item.Key == change.Key ? item with { IsComplete = change.IsComplete } : item).ToArray();
+    private void ShowToast(ToastState state) => Toasts.Show(new ToastOptions
+    {
+        State = state,
+        Title = T("Demo.Motion.Toast.Notification"),
+        Message = T($"Demo.Motion.Toast.Message.{state}"),
+        ActionText = state == ToastState.Success ? T("Demo.Motion.Toast.Undo") : null,
+        OnAction = UndoToast,
+        CloseLabel = T("Demo.Motion.Toast.Close"),
+        CssClass = "demo-custom-toast"
+    });
+    private Task UndoToast() => Task.CompletedTask;
+}

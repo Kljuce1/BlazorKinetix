@@ -1,0 +1,61 @@
+.listbox-demo-card {
+    min-width: 0
+}
+
+    .listbox-demo-card ::deep .bk-listbox {
+        margin-top: 1rem
+    }
+
+    .listbox-demo-card ::deep .demo-violet-listbox {
+        --bk-listbox-accent: #7556c9;
+        --bk-listbox-selected-bg: #7556c926
+    }
+
+.listbox-demo-selection {
+    min-height: 1.5rem !important;
+    margin: .8rem 0 0 !important;
+    color: var(--bk-muted,#66788a) !important;
+    font-size: .84rem !important
+}
+
+.listbox-person {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    min-width: 0
+}
+
+    .listbox-person img {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        object-fit: cover;
+        flex: none
+    }
+
+    .listbox-person > span {
+        display: grid;
+        gap: .1rem;
+        min-width: 0
+    }
+
+    .listbox-person strong, .listbox-person small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap
+    }
+
+    .listbox-person small {
+        color: var(--bk-muted,#66788a);
+        font-size: .76rem
+    }
+
+.listbox-demo-empty {
+    display: grid;
+    justify-items: center;
+    gap: .3rem
+}
+
+    .listbox-demo-empty > span {
+        font-size: 1.7rem
+    }

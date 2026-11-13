@@ -1,0 +1,274 @@
+@namespace BlazorKinetix.Components
+@implements IAsyncDisposable
+@using BlazorKinetix.Core
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@inject KinetixTexts Texts
+@inject IJSRuntime JS
+
+<div class="bk-file-upload @(Disabled ? "is-disabled" : null) @CssClass" @ref="root">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <span class="bk-file-upload-label">@Label</span>
+    }
+    <div class="bk-file-upload-dropzone @(dragging ? "is-dragging" : null)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" /></svg>
+        <strong>@(DropText ?? Texts.Get("FileUpload.Drop"))</strong>
+        <span>@(BrowseText ?? Texts.Get("FileUpload.Browse"))</span>
+        <InputFile class="bk-file-upload-input" OnChange="FilesChangedAsync" accept="@Accept" multiple="@Multiple" disabled="@Disabled" aria-label="@(AriaLabel ?? Label ?? DropText ?? Texts.Get("FileUpload.Drop"))" />
+    </div>
+    @if (!string.IsNullOrWhiteSpace(validationError))
+    {
+        <p class="bk-file-upload-error" role="alert">@validationError</p>
+    }
+    @if (files.Count > 0)
+    {
+        <ul class="bk-file-upload-list" aria-label="@(FilesLabel ?? Texts.Get("FileUpload.Files"))">
+            @foreach (var item in files)
+            {
+                <li class="bk-file-upload-item" @key="item">
+                    @if (ItemTemplate is not null)
+                    {
+                        @ItemTemplate(item)
+                    }
+                    else
+                    {
+                        @if (item.PreviewUrl is not null)
+                        {
+                            <img class="bk-file-upload-preview" src="@item.PreviewUrl" alt="" />
+                        }
+                        else
+                        {
+
+                            <span class="bk-file-upload-file-icon" aria-hidden="true">▤</span>
+                        }
+                        <div class="bk-file-upload-details">
+                            <strong title="@item.File.Name">@item.File.Name</strong>
+                            <small>@FormatSize(item.File.Size) · @StatusText(item)</small>
+                            @if (item.Status == FileUploadStatus.Uploading)
+                            {
+                                <div class="bk-file-upload-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@item.Progress" aria-label="@item.File.Name"><span style="width:@(item.Progress)%"></span></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.Error))
+                            {
+                                <small class="bk-file-upload-item-error">@item.Error</small>
+                            }
+                        </div>
+                    }
+                    @if (item.Status == FileUploadStatus.Uploading)
+                    {
+                        <button class="bk-file-upload-action" type="button" aria-label="@(CancelText ?? Texts.Get("FileUpload.Cancel"))" @onclick="() => Cancel(item)">@(CancelText ?? Texts.Get("FileUpload.Cancel"))</button>
+                    }
+                    else
+                    {
+                        <button class="bk-file-upload-action" type="button" aria-label="@(RemoveText ?? Texts.Get("FileUpload.Remove"))" @onclick="() => RemoveAsync(item)">@(RemoveText ?? Texts.Get("FileUpload.Remove"))</button>
+                    }
+                </li>
+            }
+        </ul>
+        @if (!AutoUpload && UploadAsync is not null && files.Any(item => item.Status is FileUploadStatus.Ready or FileUploadStatus.Failed or FileUploadStatus.Canceled))
+        {
+            <button class="bk-file-upload-submit" type="button" disabled="@Disabled" @onclick="UploadAllAsync">@(UploadText ?? Texts.Get("FileUpload.Upload"))</button>
+        }
+    }
+</div>
+
+@code {
+    /// <summary>Displays a label above the upload area.</summary>
+    [Parameter] public string? Label { get; set; }
+    /// <summary>Sets the file input accept attribute and accepted file types.</summary>
+    [Parameter] public string? Accept { get; set; }
+    /// <summary>Allows selecting more than one file.</summary>
+    [Parameter] public bool Multiple { get; set; }
+    /// <summary>Sets the maximum number of files selected at once.</summary>
+    [Parameter] public int MaxFiles { get; set; } = 1;
+    /// <summary>Sets the maximum size of each file in bytes.</summary>
+    [Parameter] public long MaxFileSize { get; set; } = 5 * 1024 * 1024;
+    /// <summary>Uploads a file and reports transferred bytes.</summary>
+    [Parameter] public FileUploadHandler? UploadAsync { get; set; }
+    /// <summary>Starts uploading immediately after selection.</summary>
+    [Parameter] public bool AutoUpload { get; set; } = true;
+    /// <summary>Runs when the selected files change.</summary>
+    [Parameter] public EventCallback<IReadOnlyList<FileUploadItem>> OnFilesChanged { get; set; }
+    /// <summary>Runs after a file uploads successfully.</summary>
+    [Parameter] public EventCallback<FileUploadItem> OnUploaded { get; set; }
+    /// <summary>Runs when an upload fails.</summary>
+    [Parameter] public EventCallback<FileUploadItem> OnUploadFailed { get; set; }
+    /// <summary>Shows small image previews.</summary>
+    [Parameter] public bool ShowPreviews { get; set; }
+    /// <summary>Sets the largest image preview read into memory.</summary>
+    [Parameter] public long MaxPreviewBytes { get; set; } = 512 * 1024;
+    /// <summary>Renders custom content for each file.</summary>
+    [Parameter] public RenderFragment<FileUploadItem>? ItemTemplate { get; set; }
+    /// <summary>Sets the upload area heading.</summary>
+    [Parameter] public string? DropText { get; set; }
+    /// <summary>Sets the upload area instruction.</summary>
+    [Parameter] public string? BrowseText { get; set; }
+    /// <summary>Sets the upload button text.</summary>
+    [Parameter] public string? UploadText { get; set; }
+    /// <summary>Sets the cancel button text.</summary>
+    [Parameter] public string? CancelText { get; set; }
+    /// <summary>Sets the remove button text.</summary>
+    [Parameter] public string? RemoveText { get; set; }
+    /// <summary>Sets the file list label.</summary>
+    [Parameter] public string? FilesLabel { get; set; }
+    /// <summary>Sets the file input's accessible label.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Disables selection and upload.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Adds CSS classes to the control root.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private readonly List<FileUploadItem> files = [];
+    private ElementReference root;
+    private IJSObjectReference? module;
+    private DotNetObjectReference<FileUpload>? self;
+    private bool dragging;
+    private string? validationError;
+
+    /// <summary>Gets the currently selected files.</summary>
+    public IReadOnlyList<FileUploadItem> Files => files.AsReadOnly();
+
+    private async Task FilesChangedAsync(InputFileChangeEventArgs args)
+    {
+        if (Disabled) return;
+        foreach (var old in files) old.Cancellation?.Cancel();
+        files.Clear();
+        validationError = null;
+        if (args.FileCount > (Multiple ? MaxFiles : 1) || MaxFiles < 1)
+        {
+            validationError = Texts.Get("FileUpload.TooMany", new Dictionary<string, string> { ["max"] = Math.Max(1, MaxFiles).ToString() });
+            await OnFilesChanged.InvokeAsync(Files);
+            return;
+        }
+        foreach (var file in args.GetMultipleFiles(Math.Max(1, MaxFiles)))
+        {
+            if (file.Size > MaxFileSize || MaxFileSize < 1)
+            {
+                validationError = Texts.Get("FileUpload.TooLarge", new Dictionary<string, string> { ["name"] = file.Name, ["max"] = FormatSize(MaxFileSize) });
+                continue;
+            }
+            if (!IsAccepted(file))
+            {
+                validationError = Texts.Get("FileUpload.InvalidType", new Dictionary<string, string> { ["name"] = file.Name });
+                continue;
+            }
+            var item = new FileUploadItem(file);
+            files.Add(item);
+            if (ShowPreviews && file.Size <= MaxPreviewBytes && IsPreviewType(file.ContentType))
+                await CreatePreviewAsync(item);
+        }
+        await OnFilesChanged.InvokeAsync(Files);
+        if (AutoUpload && UploadAsync is not null) await UploadAllAsync();
+    }
+
+    private bool IsAccepted(IBrowserFile file)
+    {
+        if (string.IsNullOrWhiteSpace(Accept)) return true;
+        var extension = Path.GetExtension(file.Name);
+        return Accept.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Any(rule =>
+            rule == "*/*" || rule.Equals(file.ContentType, StringComparison.OrdinalIgnoreCase)
+            || rule.EndsWith("/*", StringComparison.Ordinal) && file.ContentType.StartsWith(rule[..^1], StringComparison.OrdinalIgnoreCase)
+            || rule.StartsWith('.') && rule.Equals(extension, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsPreviewType(string contentType) => contentType is "image/png" or "image/jpeg" or "image/gif" or "image/webp";
+
+    private async Task CreatePreviewAsync(FileUploadItem item)
+    {
+        try
+        {
+            await using var stream = item.File.OpenReadStream(MaxPreviewBytes);
+            using var memory = new MemoryStream();
+            await stream.CopyToAsync(memory);
+            item.PreviewUrl = $"data:{item.File.ContentType};base64,{Convert.ToBase64String(memory.ToArray())}";
+        }
+        catch (Exception) { item.PreviewUrl = null; }
+    }
+
+    /// <summary>Uploads every selected file that is ready or retryable.</summary>
+    public async Task UploadAllAsync()
+    {
+        if (Disabled || UploadAsync is null) return;
+        foreach (var item in files.ToArray())
+            if (item.Status is FileUploadStatus.Ready or FileUploadStatus.Failed or FileUploadStatus.Canceled)
+                await UploadItemAsync(item);
+    }
+
+    /// <summary>Uploads one selected file.</summary>
+    public async Task UploadItemAsync(FileUploadItem item)
+    {
+        if (Disabled || UploadAsync is null || !files.Contains(item) || item.Status == FileUploadStatus.Uploading) return;
+        item.Cancellation?.Dispose();
+        var cancellation = new CancellationTokenSource();
+        item.Cancellation = cancellation;
+        item.Status = FileUploadStatus.Uploading;
+        item.Progress = 0;
+        item.Error = null;
+        await InvokeAsync(StateHasChanged);
+        var progress = new Progress<long>(bytes => _ = InvokeAsync(() =>
+        {
+            if (!cancellation.IsCancellationRequested && item.Status == FileUploadStatus.Uploading && files.Contains(item))
+            {
+                item.Progress = item.File.Size == 0 ? 100 : (int)Math.Clamp(bytes * 100.0 / item.File.Size, 0, 100);
+                StateHasChanged();
+            }
+        }));
+        try
+        {
+            await UploadAsync(item.File, progress, cancellation.Token);
+            if (cancellation.IsCancellationRequested) { item.Status = FileUploadStatus.Canceled; return; }
+            item.Progress = 100;
+            item.Status = FileUploadStatus.Completed;
+            await OnUploaded.InvokeAsync(item);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { item.Status = FileUploadStatus.Canceled; }
+        catch (Exception)
+        {
+            item.Status = FileUploadStatus.Failed;
+            item.Error = Texts.Get("FileUpload.Failed");
+            await OnUploadFailed.InvokeAsync(item);
+        }
+        finally { await InvokeAsync(StateHasChanged); }
+    }
+
+    private void Cancel(FileUploadItem item) { item.Cancellation?.Cancel(); item.Status = FileUploadStatus.Canceled; }
+
+    private async Task RemoveAsync(FileUploadItem item)
+    {
+        item.Cancellation?.Cancel();
+        files.Remove(item);
+        await OnFilesChanged.InvokeAsync(Files);
+    }
+
+    private string StatusText(FileUploadItem item) => item.Status switch
+    {
+        FileUploadStatus.Ready => Texts.Get("FileUpload.Ready"),
+        FileUploadStatus.Uploading => $"{item.Progress}%",
+        FileUploadStatus.Completed => Texts.Get("FileUpload.Completed"),
+        FileUploadStatus.Canceled => Texts.Get("FileUpload.Canceled"),
+        _ => Texts.Get("FileUpload.Failed")
+    };
+    private static string FormatSize(long bytes) => bytes < 1024 ? $"{bytes} B" : bytes < 1024 * 1024 ? $"{bytes / 1024d:0.#} KB" : $"{bytes / (1024d * 1024):0.#} MB";
+
+    [JSInvokable] public Task SetDragging(bool value) { dragging = value; return InvokeAsync(StateHasChanged); }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorKinetix/file-upload.js");
+        self = DotNetObjectReference.Create(this);
+        await module.InvokeVoidAsync("initialize", root, self);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        foreach (var item in files) { item.Cancellation?.Cancel(); item.Cancellation?.Dispose(); }
+        if (module is not null)
+        {
+            try { await module.InvokeVoidAsync("dispose", root); await module.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
+        }
+        self?.Dispose();
+    }
+}

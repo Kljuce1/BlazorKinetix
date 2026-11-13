@@ -1,0 +1,41 @@
+@inject KinetixTexts Texts
+
+<nav class="docs-nav" aria-label="@T("Demo.Docs.Navigation")">
+    <input type="search" value="@query" @oninput="Search" placeholder="@T("Demo.Docs.Search")" aria-label="@T("Demo.Docs.Search")" />
+    @foreach (var group in Groups)
+    {
+        var matches = group.Items.Where(item => string.IsNullOrWhiteSpace(query) || ItemTitle(item.Name).Contains(query, StringComparison.OrdinalIgnoreCase) || T(group.Label).Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
+        @if (matches.Length > 0)
+        {
+            <div class="docs-nav-group">
+                <span>@T(group.Label)</span>
+                @foreach (var item in matches) { <a href="/docs#@item.Id">@ItemTitle(item.Name)</a> }
+            </div>
+        }
+    }
+</nav>
+
+@code {
+    private string query = "";
+    private string T(string key) => Texts.Get(key);
+    private string ItemTitle(string name) => name switch
+    {
+        "Start" => T("Demo.Docs.Nav.Start"),
+        "Installation" => T("Demo.Docs.Installation"),
+        "Theme" => T("Demo.Docs.Theme"),
+        "Date pickers" => T("Demo.Docs.Nav.Dates"),
+        "Time pickers" => T("Demo.Docs.Nav.Times"),
+        _ => name
+    };
+    private void Search(ChangeEventArgs args) => query = args.Value?.ToString() ?? "";
+    private static readonly (string Label, (string Name, string Id)[] Items)[] Groups =
+    [
+        ("Demo.Docs.Group.Start", [("Start", "start"), ("Installation", "installation"), ("Theme", "theme")]),
+        ("Demo.Index.Fields", [("InputBox", "inputbox"), ("ListBox", "listbox"), ("Autocomplete", "autocomplete"), ("FileUpload", "fileupload"), ("FormField", "formfield")]),
+        ("Demo.Index.Actions", [("Button", "button"), ("Switch", "switch")]),
+        ("Demo.Index.Dates", [("Date pickers", "datepickers"), ("Time pickers", "timepickers")]),
+        ("Demo.Index.Navigation", [("NavMenu", "navmenu"), ("TabControl", "tabcontrol"), ("ActionMenu", "actionmenu")]),
+        ("Demo.Index.Feedback", [("ProgressIndicator", "progressindicator"), ("Toast", "toast"), ("Tooltip", "tooltip"), ("Modal", "modal"), ("Dialog", "dialog")]),
+        ("Demo.Index.Data", [("DataTable", "datatable"), ("Pagination", "pagination")])
+    ];
+}

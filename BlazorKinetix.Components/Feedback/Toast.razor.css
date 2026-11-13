@@ -1,0 +1,150 @@
+.bk-toast {
+    --bk-toast-accent: var(--bk-primary,#08777e);
+    --bk-toast-surface: var(--bk-surface,#fff);
+    --bk-toast-text: var(--bk-text,#193047);
+    --bk-toast-line: var(--bk-border,#cbd5df);
+    position: fixed;
+    z-index: 1100;
+    right: var(--bk-toast-right,1.25rem);
+    bottom: var(--bk-toast-bottom,1.25rem);
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    width: min(28rem,calc(100vw - 2rem));
+    min-height: 3.5rem;
+    padding: .75rem 1rem;
+    overflow: hidden;
+    border: 1px solid var(--bk-toast-line);
+    border-left: 4px solid var(--bk-toast-accent);
+    border-radius: var(--bk-toast-radius,.75rem);
+    background: var(--bk-toast-surface);
+    color: var(--bk-toast-text);
+    box-shadow: 0 15px 40px #0003;
+    font: inherit;
+    animation: bk-toast-enter .35s cubic-bezier(.2,1.3,.4,1)
+}
+
+    .bk-toast.bk-toast-inline {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        width: 100%;
+        z-index: auto
+    }
+
+.bk-toast-success {
+    --bk-toast-accent: var(--bk-success,#19856c)
+}
+
+.bk-toast-warning {
+    --bk-toast-accent: var(--bk-warning,#bd7620)
+}
+
+.bk-toast-danger {
+    --bk-toast-accent: var(--bk-danger,#cf4f5a)
+}
+
+.bk-toast-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 50%;
+    background: var(--bk-toast-accent);
+    color: var(--bk-toast-icon-text,#fff);
+    font-weight: 800
+}
+
+    .bk-toast-icon ::deep svg {
+        width: 1rem;
+        height: 1rem
+    }
+
+.bk-toast-content {
+    display: grid;
+    gap: .12rem;
+    min-width: 0;
+    font-size: .88rem
+}
+
+    .bk-toast-content strong {
+        font-size: .94rem
+    }
+
+.bk-toast-action, .bk-toast-close {
+    flex: none;
+    border: 0;
+    background: none;
+    color: var(--bk-toast-accent);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer
+}
+
+.bk-toast-action {
+    margin-left: auto
+}
+
+.bk-toast-close {
+    margin-left: auto;
+    font-size: 1.4rem;
+    line-height: 1
+}
+
+.bk-toast-action + .bk-toast-close {
+    margin-left: 0
+}
+
+.bk-toast-action:focus-visible, .bk-toast-close:focus-visible {
+    outline: 2px solid var(--bk-toast-accent);
+    outline-offset: 2px
+}
+
+.bk-toast-timer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--bk-toast-accent);
+    transform-origin: left;
+    animation: bk-toast-timer var(--bk-toast-duration) linear forwards
+}
+
+@keyframes bk-toast-enter {
+    from {
+        opacity: 0;
+        transform: translateY(1.5rem) scale(.95)
+    }
+
+    to {
+        opacity: 1;
+        transform: none
+    }
+}
+
+@keyframes bk-toast-timer {
+    from {
+        transform: scaleX(1)
+    }
+
+    to {
+        transform: scaleX(0)
+    }
+}
+
+@media(max-width:600px) {
+    .bk-toast {
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+        width: auto
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .bk-toast, .bk-toast-timer {
+        animation-duration: .01ms !important
+    }
+}

@@ -1,0 +1,118 @@
+@namespace BlazorKinetix.Components
+@implements IDisposable
+
+@if (IsOpen)
+{
+    <div class="bk-toast bk-toast-@State.ToString().ToLowerInvariant() @(Inline ? "bk-toast-inline" : null) @CssClass" role="@(State == ToastState.Danger ? "alert" : "status")" aria-live="@(State == ToastState.Danger ? "assertive" : "polite")">
+        <span class="bk-toast-icon" aria-hidden="true">
+            @if (Icon is not null)
+            {
+                @Icon
+            }
+            else if (!string.IsNullOrWhiteSpace(IconClass))
+            {
+
+                <i class="@IconClass"></i>
+            }
+            else
+            {
+
+                @(State switch { ToastState.Success => "✓", ToastState.Warning => "!", ToastState.Danger => "×", _ => "i" })
+            }
+        </span>
+        <div class="bk-toast-content">
+            @if (!string.IsNullOrWhiteSpace(Title))
+            {
+                <strong>@Title</strong>
+            }
+            <span>@Message</span>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(ActionText))
+        {
+            <button class="bk-toast-action" type="button" @onclick="RunAction">@ActionText</button>
+        }
+        @if (ShowClose)
+        {
+            <button class="bk-toast-close" type="button" aria-label="@CloseLabel" @onclick="HideAsync">×</button>
+        }
+        <span class="bk-toast-timer" style="--bk-toast-duration:@Duration.TotalMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture)ms"></span>
+    </div>
+}
+
+@code {
+    /// <summary>Shows or hides the toast.</summary>
+    [Parameter] public bool IsOpen { get; set; }
+    /// <summary>Runs when visibility changes.</summary>
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    /// <summary>Sets the toast appearance.</summary>
+    [Parameter] public ToastState State { get; set; } = ToastState.Info;
+    /// <summary>Displays a heading.</summary>
+    [Parameter] public string? Title { get; set; }
+    /// <summary>Displays the toast message.</summary>
+    [Parameter] public string Message { get; set; } = "";
+    /// <summary>Displays a button beside the message.</summary>
+    [Parameter] public string? ActionText { get; set; }
+    /// <summary>Runs when the action button is pressed.</summary>
+    [Parameter] public EventCallback OnAction { get; set; }
+    /// <summary>Sets the time before automatic dismissal; zero keeps it visible.</summary>
+    [Parameter] public TimeSpan Duration { get; set; } = TimeSpan.FromSeconds(5);
+    /// <summary>Shows a close button.</summary>
+    [Parameter] public bool ShowClose { get; set; } = true;
+    /// <summary>Labels the close button.</summary>
+    [Parameter] public string CloseLabel { get; set; } = "Close";
+    /// <summary>Displays custom icon markup.</summary>
+    [Parameter] public RenderFragment? Icon { get; set; }
+    /// <summary>Uses an icon class.</summary>
+    [Parameter] public string? IconClass { get; set; }
+    /// <summary>Adds CSS classes to the toast.</summary>
+    [Parameter] public string? CssClass { get; set; }
+    /// <summary>Places the toast inside a ToastHost stack.</summary>
+    [Parameter] public bool Inline { get; set; }
+
+    private CancellationTokenSource? timer;
+    private bool previousOpen;
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen && !previousOpen) StartTimer();
+        if (!IsOpen) CancelTimer();
+        previousOpen = IsOpen;
+    }
+
+    /// <summary>Opens the toast and restarts its dismissal timer.</summary>
+    public async Task ShowAsync()
+    {
+        IsOpen = true;
+        previousOpen = true;
+        StartTimer();
+        await IsOpenChanged.InvokeAsync(true);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>Closes the toast.</summary>
+    public async Task HideAsync()
+    {
+        CancelTimer();
+        IsOpen = false;
+        previousOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RunAction() { await OnAction.InvokeAsync(); await HideAsync(); }
+    private void StartTimer()
+    {
+        CancelTimer();
+        if (Duration <= TimeSpan.Zero) return;
+        timer = new CancellationTokenSource();
+        _ = DismissLaterAsync(timer.Token);
+    }
+    private async Task DismissLaterAsync(CancellationToken token)
+    {
+        try { await Task.Delay(Duration, token); await InvokeAsync(HideAsync); }
+        catch (OperationCanceledException) { }
+    }
+    private void CancelTimer() { timer?.Cancel(); timer?.Dispose(); timer = null; }
+    /// <summary>Cancels the dismissal timer.</summary>
+    public void Dispose() => CancelTimer();
+}

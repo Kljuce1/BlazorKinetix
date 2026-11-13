@@ -1,0 +1,10 @@
+.docs-api{margin:1.5rem 0 2.5rem}
+.docs-api h3{margin:0 0 .6rem;font-size:1rem}
+.docs-api-scroll{overflow-x:auto;border:1px solid var(--bk-border,#cbd5df);border-radius:.7rem}
+.docs-api table{width:100%;border-collapse:collapse;text-align:left;font-size:.85rem}
+.docs-api th,.docs-api td{padding:.65rem .75rem;border-bottom:1px solid var(--bk-border,#cbd5df);vertical-align:top}
+.docs-api tbody tr:last-child th,.docs-api tbody tr:last-child td{border-bottom:0}
+.docs-api thead{background:var(--bk-soft-surface,#eef4f5)}
+.docs-api tbody th{font-weight:600;white-space:nowrap}
+.docs-api code{font-size:.8rem;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:600px){.docs-api table{min-width:36rem}}

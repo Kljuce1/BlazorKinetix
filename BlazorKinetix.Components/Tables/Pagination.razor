@@ -1,0 +1,130 @@
+@namespace BlazorKinetix.Components
+@using BlazorKinetix.Core
+@inject KinetixTexts Texts
+
+<nav class="bk-pagination @CssClass" aria-label="@(AriaLabel ?? Texts.Get("Pagination.Navigation"))" aria-busy="@Loading">
+    @if (ShowRange)
+    {
+        <span class="bk-pagination-range" role="status">@Texts.Get("Table.Showing") @RangeStart–@RangeEnd @Texts.Get("Table.Of") @SafeTotal @Texts.Get("Table.Items")</span>
+    }
+    <div class="bk-pagination-actions">
+        @if (ValidPageSizes.Count > 0)
+        {
+            <label class="bk-pagination-size">
+                <span>@(PageSizeLabel ?? Texts.Get("Table.RowsPerPage"))</span>
+                <select value="@EffectivePageSize" disabled="@Loading" @onchange="ChangeSizeAsync">
+                    @foreach (var size in ValidPageSizes)
+                    {
+                        <option value="@size">@size</option>
+                    }
+                </select>
+            </label>
+        }
+        <div class="bk-pagination-pages">
+            @if (ShowFirstLast)
+            {
+                <button class="bk-pagination-edge" type="button" disabled="@(Loading || EffectivePage <= 1)" aria-label="@(FirstLabel ?? Texts.Get("Pagination.First"))" @onclick="() => GoToAsync(1)">«</button>
+            }
+            <button type="button" disabled="@(Loading || EffectivePage <= 1)" aria-label="@(PreviousLabel ?? Texts.Get("Table.Previous"))" @onclick="() => GoToAsync(EffectivePage - 1)">‹</button>
+            @if (ShowPageNumbers)
+            {
+                @if (FirstVisiblePage > 1)
+                {
+                    <span class="bk-pagination-ellipsis" aria-hidden="true">…</span>
+                }
+                @for (var pageNumber = FirstVisiblePage; pageNumber <= LastVisiblePage; pageNumber++)
+                {
+                    var target = pageNumber;
+                    <button type="button" class="bk-pagination-number @(pageNumber == EffectivePage ? "is-current" : null)" aria-current="@(pageNumber == EffectivePage ? "page" : null)"
+                            aria-label="@Texts.Get("Pagination.Page", new Dictionary<string, string> { ["page"] = pageNumber.ToString() })"
+                            disabled="@Loading" @onclick="() => GoToAsync(target)">
+                        @pageNumber
+                    </button>
+                }
+                @if (LastVisiblePage < PageCount)
+                {
+                    <span class="bk-pagination-ellipsis" aria-hidden="true">…</span>
+                }
+            }
+            else
+            {
+                <span class="bk-pagination-count">@EffectivePage / @PageCount</span>
+            }
+            <button type="button" disabled="@(Loading || EffectivePage >= PageCount)" aria-label="@(NextLabel ?? Texts.Get("Table.Next"))" @onclick="() => GoToAsync(EffectivePage + 1)">›</button>
+            @if (ShowFirstLast)
+            {
+                <button class="bk-pagination-edge" type="button" disabled="@(Loading || EffectivePage >= PageCount)" aria-label="@(LastLabel ?? Texts.Get("Pagination.Last"))" @onclick="() => GoToAsync(PageCount)">»</button>
+            }
+        </div>
+    </div>
+</nav>
+
+@code {
+    /// <summary>Sets the total number of items.</summary>
+    [Parameter] public int TotalItems { get; set; }
+    /// <summary>Sets the current page using one-based numbering.</summary>
+    [Parameter] public int Page { get; set; } = 1;
+    /// <summary>Runs when the current page changes.</summary>
+    [Parameter] public EventCallback<int> PageChanged { get; set; }
+    /// <summary>Sets the number of items per page.</summary>
+    [Parameter] public int PageSize { get; set; } = 10;
+    /// <summary>Runs when the page size changes.</summary>
+    [Parameter] public EventCallback<int> PageSizeChanged { get; set; }
+    /// <summary>Offers selectable page sizes; an empty list hides the selector.</summary>
+    [Parameter] public IReadOnlyList<int> PageSizes { get; set; } = [];
+    /// <summary>Runs once after a page or size change.</summary>
+    [Parameter] public EventCallback<PaginationState> OnChange { get; set; }
+    /// <summary>Disables controls while results are loading.</summary>
+    [Parameter] public bool Loading { get; set; }
+    /// <summary>Shows the current item range and total.</summary>
+    [Parameter] public bool ShowRange { get; set; } = true;
+    /// <summary>Shows numbered page buttons.</summary>
+    [Parameter] public bool ShowPageNumbers { get; set; } = true;
+    /// <summary>Shows first and last page buttons.</summary>
+    [Parameter] public bool ShowFirstLast { get; set; } = true;
+    /// <summary>Sets the maximum number of numbered buttons.</summary>
+    [Parameter] public int MaxVisiblePages { get; set; } = 5;
+    /// <summary>Sets the page size selector label.</summary>
+    [Parameter] public string? PageSizeLabel { get; set; }
+    /// <summary>Sets the first page button label.</summary>
+    [Parameter] public string? FirstLabel { get; set; }
+    /// <summary>Sets the previous page button label.</summary>
+    [Parameter] public string? PreviousLabel { get; set; }
+    /// <summary>Sets the next page button label.</summary>
+    [Parameter] public string? NextLabel { get; set; }
+    /// <summary>Sets the last page button label.</summary>
+    [Parameter] public string? LastLabel { get; set; }
+    /// <summary>Sets the navigation label for assistive technology.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Adds CSS classes to the pagination root.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private int SafeTotal => Math.Max(0, TotalItems);
+    private int EffectivePageSize => ValidPageSizes.Count > 0 && !ValidPageSizes.Contains(PageSize) ? ValidPageSizes[0] : Math.Max(1, PageSize);
+    private int PageCount => Math.Max(1, (int)Math.Ceiling(SafeTotal / (double)EffectivePageSize));
+    private int EffectivePage => Math.Clamp(Page, 1, PageCount);
+    private int RangeStart => SafeTotal == 0 ? 0 : (EffectivePage - 1) * EffectivePageSize + 1;
+    private int RangeEnd => (int)Math.Min((long)EffectivePage * EffectivePageSize, SafeTotal);
+    private IReadOnlyList<int> ValidPageSizes => PageSizes.Where(size => size > 0).Distinct().ToArray();
+    private int VisibleCount => Math.Clamp(MaxVisiblePages, 1, 20);
+    private int FirstVisiblePage => Math.Clamp(EffectivePage - VisibleCount / 2, 1, Math.Max(1, PageCount - VisibleCount + 1));
+    private int LastVisiblePage => Math.Min(PageCount, FirstVisiblePage + VisibleCount - 1);
+
+    private async Task GoToAsync(int target)
+    {
+        if (Loading || target < 1 || target > PageCount || target == EffectivePage) return;
+        Page = target;
+        await PageChanged.InvokeAsync(target);
+        await OnChange.InvokeAsync(new(target, EffectivePageSize));
+    }
+
+    private async Task ChangeSizeAsync(ChangeEventArgs args)
+    {
+        if (Loading || !int.TryParse(args.Value?.ToString(), out var size) || !ValidPageSizes.Contains(size) || size == EffectivePageSize) return;
+        PageSize = size;
+        Page = 1;
+        await PageSizeChanged.InvokeAsync(size);
+        await PageChanged.InvokeAsync(1);
+        await OnChange.InvokeAsync(new(1, size));
+    }
+}

@@ -1,0 +1,39 @@
+@using Microsoft.AspNetCore.Components.Forms
+@inject KinetixTexts Texts
+
+<section class="section" id="file-upload">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.FileUpload.Eyebrow")</span><div><h2>FileUpload</h2><p>@T("Demo.FileUpload.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card file-upload-demo-card">
+            <span class="eyebrow">FILEUPLOAD / 01</span><h3>@T("Demo.FileUpload.Preview.Title")</h3><p>@T("Demo.FileUpload.Preview.Description")</p>
+            <FileUpload Label="@T("Demo.FileUpload.Preview.Label")" Accept="image/png,image/jpeg"
+                        MaxFiles="1" MaxFileSize="1048576" MaxPreviewBytes="768144" ShowPreviews="true" />
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("file-upload-preview")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card file-upload-demo-card">
+            <span class="eyebrow">FILEUPLOAD / 02</span><h3>@T("Demo.FileUpload.Progress.Title")</h3><p>@T("Demo.FileUpload.Progress.Description")</p>
+            <FileUpload Label="@T("Demo.FileUpload.Progress.Label")" Accept=".txt"
+                        Multiple="true" MaxFiles="2" MaxFileSize="262144" AutoUpload="false"
+                        UploadAsync="SimulateUploadAsync" />
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("file-upload-progress")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+</section>
+
+@code {
+    [Parameter] public EventCallback<string> OnShowCode { get; set; }
+    private string T(string key) => Texts.Get(key);
+    private static async Task SimulateUploadAsync(IBrowserFile file, IProgress<long> progress, CancellationToken token)
+    {
+        await using var stream = file.OpenReadStream(262144, token);
+        var buffer = new byte[16384];
+        long read = 0;
+        int count;
+        while ((count = await stream.ReadAsync(buffer, token)) > 0)
+        {
+            read += count;
+            progress.Report(read);
+            await Task.Delay(60, token);
+        }
+    }
+}

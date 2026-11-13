@@ -1,0 +1,258 @@
+.bk-switch {
+    --bk-switch-off: var(--bk-soft-surface,#dce5eb);
+    --bk-switch-on: var(--bk-primary,#08777e);
+    --bk-switch-on-text: var(--bk-on-primary,#fff);
+    --bk-switch-knob: #fff;
+    --bk-switch-line: var(--bk-border,#cbd5df);
+    display: inline-flex;
+    align-items: center;
+    gap: .7rem;
+    max-width: 100%;
+    color: var(--bk-text,#193047);
+    font: inherit;
+    cursor: pointer
+}
+
+    .bk-switch.is-disabled {
+        opacity: .5;
+        cursor: not-allowed
+    }
+
+    .bk-switch input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0
+    }
+
+.bk-switch-track {
+    position: relative;
+    display: block;
+    width: var(--bk-switch-width,4rem);
+    height: var(--bk-switch-height,2.2rem);
+    flex: none;
+    border-radius: 100px;
+    background: var(--bk-switch-off);
+    border: 1px solid var(--bk-switch-line);
+    transition: background .32s,border-color .32s,box-shadow .32s
+}
+
+.bk-switch-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    display: grid;
+    place-items: center;
+    width: calc(var(--bk-switch-height,2.2rem) - 8px);
+    height: calc(var(--bk-switch-height,2.2rem) - 8px);
+    border-radius: 50%;
+    background: var(--bk-switch-knob);
+    box-shadow: 0 2px 6px #0003;
+    transition: left .42s cubic-bezier(.2,1.4,.45,1),transform .42s cubic-bezier(.2,1.4,.45,1),border-radius .42s
+}
+
+.bk-switch.is-on .bk-switch-track {
+    background: var(--bk-switch-on);
+    border-color: var(--bk-switch-on);
+    box-shadow: 0 0 13px color-mix(in srgb,var(--bk-switch-on) 40%,transparent)
+}
+
+.bk-switch.is-on .bk-switch-knob {
+    left: calc(100% - var(--bk-switch-height,2.2rem) + 4px)
+}
+
+.bk-switch-liquid .bk-switch-knob {
+    transform: scaleX(1);
+    transform-origin: left center
+}
+
+.bk-switch-liquid.is-on .bk-switch-knob {
+    animation: bk-liquid .42s ease both
+}
+
+.bk-switch-liquid:not(.is-on) .bk-switch-knob {
+    animation: bk-liquid-back .42s ease both
+}
+
+@keyframes bk-liquid {
+    35% {
+        transform: scaleX(1.42);
+        border-radius: 45% 60% 60% 45%
+    }
+
+    75% {
+        transform: scaleX(.86)
+    }
+
+    100% {
+        transform: scaleX(1)
+    }
+}
+
+@keyframes bk-liquid-back {
+    35% {
+        transform: scaleX(1.42);
+        border-radius: 60% 45% 45% 60%
+    }
+
+    75% {
+        transform: scaleX(.86)
+    }
+
+    100% {
+        transform: scaleX(1)
+    }
+}
+
+.bk-switch-morph {
+    width: 65%;
+    height: 65%;
+    color: var(--bk-switch-on);
+    transition: transform .4s ease,color .4s ease
+}
+
+    .bk-switch-morph path {
+        transform-origin: center;
+        transition: opacity .22s,transform .4s cubic-bezier(.2,1.4,.45,1)
+    }
+
+.bk-switch-cross {
+    opacity: 1;
+    transform: rotate(0) scale(1)
+}
+
+.bk-switch-check {
+    opacity: 0;
+    transform: rotate(-95deg) scale(.25)
+}
+
+.bk-switch-iconmorph.is-on .bk-switch-cross {
+    opacity: 0;
+    transform: rotate(95deg) scale(.25)
+}
+
+.bk-switch-iconmorph.is-on .bk-switch-check {
+    opacity: 1;
+    transform: rotate(0) scale(1)
+}
+
+.bk-switch-box {
+    display: grid;
+    place-items: center;
+    width: var(--bk-switch-box-size,1.65rem);
+    height: var(--bk-switch-box-size,1.65rem);
+    flex: none;
+    border: 2px solid var(--bk-switch-line);
+    border-radius: var(--bk-switch-box-radius,.4rem);
+    background: transparent;
+    transition: background .28s,border-color .28s,transform .32s cubic-bezier(.2,1.5,.5,1)
+}
+
+.bk-switch-checkbox.is-on .bk-switch-box {
+    background: var(--bk-switch-on);
+    border-color: var(--bk-switch-on);
+    animation: bk-checkbox-pop .32s ease
+}
+
+@keyframes bk-checkbox-pop {
+    45% {
+        transform: scale(.78)
+    }
+
+    75% {
+        transform: scale(1.1)
+    }
+
+    100% {
+        transform: scale(1)
+    }
+}
+
+.bk-switch-box svg {
+    width: 80%;
+    height: 80%;
+    fill: none;
+    stroke: var(--bk-switch-on-text);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round
+}
+
+.bk-switch-box path {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    transition: stroke-dashoffset .3s ease .08s
+}
+
+.bk-switch-checkbox.is-on .bk-switch-box path {
+    stroke-dashoffset: 0
+}
+
+.bk-switch-label {
+    font-weight: 600
+}
+
+.bk-switch:focus-within .bk-switch-track, .bk-switch:focus-within .bk-switch-box {
+    outline: 2px solid var(--bk-switch-on);
+    outline-offset: 3px
+}
+
+.bk-switch-segmented {
+    position: relative;
+    display: inline-grid;
+    grid-template-columns: repeat(var(--bk-segment-count),minmax(0,1fr));
+    gap: .2rem;
+    padding: .25rem;
+    border: 1px solid var(--bk-switch-line);
+    border-radius: var(--bk-switch-segment-radius,2rem);
+    background: var(--bk-switch-off);
+    cursor: default
+}
+
+    .bk-switch-segmented:before {
+        content: "";
+        position: absolute;
+        top: .25rem;
+        bottom: .25rem;
+        left: var(--bk-segment-left);
+        width: calc((100% - .5rem - (var(--bk-segment-count) - 1) * .2rem)/var(--bk-segment-count));
+        border-radius: inherit;
+        background: var(--bk-switch-on);
+        box-shadow: 0 2px 10px color-mix(in srgb,var(--bk-switch-on) 35%,transparent);
+        transition: left .34s cubic-bezier(.2,1.25,.4,1)
+    }
+
+.bk-switch-option {
+    position: relative;
+    min-width: var(--bk-switch-segment-min-width,5.5rem);
+    padding: .55rem .9rem;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    color: var(--bk-text,#193047);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color .3s
+}
+
+    .bk-switch-option.is-selected {
+        color: var(--bk-switch-on-text)
+    }
+
+    .bk-switch-option:disabled {
+        opacity: .45;
+        cursor: not-allowed
+    }
+
+    .bk-switch-option:focus-visible {
+        outline: 2px solid var(--bk-switch-on);
+        outline-offset: 2px
+    }
+
+@media(prefers-reduced-motion:reduce) {
+    .bk-switch *, .bk-switch *::before, .bk-switch *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important
+    }
+}

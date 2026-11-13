@@ -1,0 +1,44 @@
+.bk-form-field {
+    --bk-field-text: var(--bk-text,#203044);
+    --bk-field-muted: var(--bk-muted,#66788a);
+    --bk-field-accent: var(--bk-primary,#08777e);
+    --bk-field-error: var(--bk-danger,#cf4f5a);
+    display: grid;
+    gap: .4rem;
+    min-width: 0;
+    color: var(--bk-field-text);
+    font: inherit
+}
+
+.bk-form-field-label {
+    font-weight: 700
+}
+
+.bk-form-field-required, .bk-form-field-errors {
+    color: var(--bk-field-error)
+}
+
+.bk-form-field-control {
+    min-width: 0
+}
+
+    .bk-form-field-control ::deep input, .bk-form-field-control ::deep select, .bk-form-field-control ::deep textarea {
+        max-width: 100%
+    }
+
+.bk-form-field.is-invalid .bk-form-field-control ::deep input, .bk-form-field.is-invalid .bk-form-field-control ::deep select, .bk-form-field.is-invalid .bk-form-field-control ::deep textarea {
+    border-color: var(--bk-field-error)
+}
+
+.bk-form-field-help {
+    color: var(--bk-field-muted);
+    font-size: .85rem
+}
+
+.bk-form-field-errors {
+    font-size: .85rem
+}
+
+    .bk-form-field-errors:empty {
+        display: none
+    }

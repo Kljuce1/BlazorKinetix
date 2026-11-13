@@ -1,0 +1,58 @@
+@inject KinetixTexts Texts
+
+<section class="section" id="dialog">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Dialog.Eyebrow")</span><div><h2>Dialog</h2><p>@T("Demo.Dialog.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card dialog-demo-card">
+            <span class="eyebrow">DIALOG / 01</span><h3>@T("Demo.Dialog.Info.Title")</h3><p>@T("Demo.Dialog.Info.Description")</p>
+            <Button Text="@T("Demo.Dialog.Info.Open")" OnAction="() => infoOpen = true" />
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("dialog-info")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card dialog-demo-card">
+            <span class="eyebrow">DIALOG / 02</span><h3>@T("Demo.Dialog.Danger.Title")</h3><p>@T("Demo.Dialog.Danger.Description")</p>
+            <Button Text="@T("Demo.Dialog.Danger.Open")" Color="ColorRole.Danger" OnAction="() => dangerOpen = true" />
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("dialog-danger")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card dialog-demo-card">
+            <span class="eyebrow">DIALOG / 03</span><h3>@T("Demo.Dialog.Custom.Title")</h3><p>@T("Demo.Dialog.Custom.Description")</p>
+            <Button Text="@T("Demo.Dialog.Custom.Open")" OnAction="() => customOpen = true" />
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("dialog-custom")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card dialog-demo-card">
+            <span class="eyebrow">DIALOG / 04</span><h3>@T("Demo.Dialog.States.Title")</h3><p>@T("Demo.Dialog.States.Description")</p>
+            <div class="dialog-demo-actions">
+                <button type="button" @onclick="() => OpenState(DialogMode.Question, DialogAnimation.Grow)">@T("Demo.Dialog.States.Question")</button>
+                <button type="button" @onclick="() => OpenState(DialogMode.Warning, DialogAnimation.Unfold)">@T("Demo.Dialog.States.Warning")</button>
+                <button type="button" @onclick="() => OpenState(DialogMode.Error, DialogAnimation.Grow)">@T("Demo.Dialog.States.Error")</button>
+            </div>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("dialog-states")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+</section>
+
+<Dialog Title="@T("Demo.Dialog.Info.DialogTitle")" Message="@T("Demo.Dialog.Info.Message")"
+        Mode="DialogMode.Information" Animation="DialogAnimation.TopDrop" @bind-IsOpen="infoOpen" />
+<Dialog Title="@T("Demo.Dialog.Danger.DialogTitle")" Message="@T("Demo.Dialog.Danger.Message")"
+        Mode="DialogMode.Danger" Animation="DialogAnimation.Swing" @bind-IsOpen="dangerOpen"
+        ConfirmText="@T("Demo.Dialog.Danger.Confirm")" ProcessingText="@T("Demo.Dialog.Danger.Processing")" OnConfirm="DeleteAsync" />
+<Dialog @ref="customDialog" Title="@T("Demo.Dialog.Custom.DialogTitle")"
+        Mode="DialogMode.Custom" Animation="DialogAnimation.Blur" @bind-IsOpen="customOpen">
+    <ContentTemplate><p>@T("Demo.Dialog.Custom.Message")</p><strong>@T("Demo.Dialog.Custom.Detail")</strong></ContentTemplate>
+    <FooterTemplate>
+        <button type="button" class="dialog-demo-link" @onclick="CloseCustomAsync">@T("Demo.Dialog.Custom.Close")</button>
+    </FooterTemplate>
+</Dialog>
+<Dialog Title="@T($"Demo.Dialog.States.{stateMode}.Title")" Message="@T($"Demo.Dialog.States.{stateMode}.Message")"
+        Mode="@stateMode" Animation="@stateAnimation" @bind-IsOpen="stateOpen" />
+
+@code {
+    [Parameter] public EventCallback<string> OnShowCode { get; set; }
+    private bool infoOpen, dangerOpen, customOpen, stateOpen;
+    private DialogMode stateMode = DialogMode.Question;
+    private DialogAnimation stateAnimation = DialogAnimation.Grow;
+    private Dialog? customDialog;
+    private string T(string key) => Texts.Get(key);
+    private static async Task DeleteAsync() => await Task.Delay(1400);
+    private async Task CloseCustomAsync() { if (customDialog is not null) await customDialog.CloseAsync(); }
+    private void OpenState(DialogMode mode, DialogAnimation animation) { stateMode = mode; stateAnimation = animation; stateOpen = true; }
+}

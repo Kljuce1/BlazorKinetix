@@ -1,0 +1,282 @@
+@namespace BlazorKinetix.Components
+@typeparam TValue
+@implements IAsyncDisposable
+@using System.Linq.Expressions
+@using BlazorKinetix.Core
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@inject KinetixTexts Texts
+@inject IJSRuntime JS
+
+<div class="bk-listbox @(isOpen ? "is-open" : null) @(Disabled ? "is-disabled" : null) @(HasValidationError ? "is-invalid" : null) @CssClass" @ref="root">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label class="bk-listbox-label" for="@triggerId">@Label</label>
+    }
+    <div class="bk-listbox-control">
+        <button id="@triggerId" class="bk-listbox-trigger" type="button" role="combobox"
+                aria-expanded="@isOpen" aria-haspopup="listbox" aria-controls="@listId"
+                aria-activedescendant="@(isOpen && activeIndex >= 0 ? OptionId(activeIndex) : null)"
+                aria-label="@(AriaLabel ?? Label ?? PlaceholderText)" aria-invalid="@HasValidationError"
+                disabled="@Disabled" @onclick="Toggle">
+            <span class="bk-listbox-value @(SelectedItem is null ? "is-placeholder" : null)">
+                @if (SelectedItem is { } selected)
+                {
+                    @OptionIcon(selected)
+                    <span>@selected.Text</span>
+                }
+                else
+                {
+
+                    <span>@PlaceholderText</span>
+                }
+            </span>
+            <svg class="bk-listbox-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m4 7 6 6 6-6" /></svg>
+        </button>
+        @if (Clearable && SelectedItem is not null && !Disabled)
+        {
+            <button class="bk-listbox-clear" type="button" aria-label="@(ClearLabel ?? Texts.Get("ListBox.Clear"))" @onclick="Clear">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
+            </button>
+        }
+    </div>
+    @if (isOpen)
+    {
+        <div class="bk-listbox-popup">
+            @if (Search)
+            {
+                <div class="bk-listbox-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m16 16 5 5" /></svg>
+                    <input @ref="searchInput" type="search" value="@query" placeholder="@(SearchPlaceholder ?? Texts.Get("ListBox.Search"))"
+                           aria-label="@(SearchLabel ?? Texts.Get("ListBox.Search"))"
+                           aria-controls="@listId" aria-activedescendant="@(activeIndex >= 0 ? OptionId(activeIndex) : null)" @oninput="SearchInput" />
+                </div>
+            }
+            <div id="@listId" class="bk-listbox-options" role="listbox" aria-label="@(AriaLabel ?? Label ?? PlaceholderText)">
+                @if (FilteredItems.Count == 0)
+                {
+                    <div class="bk-listbox-empty" role="status">
+                        @if (EmptyTemplate is not null)
+                        {
+                            @EmptyTemplate
+                        }
+                        else
+                        {
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="7" y="8" width="34" height="32" rx="6" /><path d="M16 20h16M16 27h10" /></svg>
+                            <span>@(NoResultsText ?? Texts.Get("ListBox.Empty"))</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    @for (var index = 0; index < FilteredItems.Count; index++)
+                    {
+                        var item = FilteredItems[index];
+                        <button id="@OptionId(index)" type="button" role="option" class="bk-listbox-option @(IsSelected(item) ? "is-selected" : null) @(activeIndex == index ? "is-active" : null)"
+                                aria-selected="@IsSelected(item)" disabled="@(!item.Enabled)" @onclick="() => Select(item)">
+                            @if (ItemTemplate is not null)
+                            {
+                                @ItemTemplate(item)
+                            }
+                            else
+                            {
+                                @OptionIcon(item)
+                                <span class="bk-listbox-option-text">
+                                    <strong>@item.Text</strong>
+                                    @if (!string.IsNullOrWhiteSpace(item.Description))
+                                    {
+                                        <small>@item.Description</small>
+                                    }
+                                </span>
+                            }
+                            @if (IsSelected(item))
+                            {
+                                <svg class="bk-listbox-check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m4 10 4 4 8-8" /></svg>
+                            }
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Defines the available options.</summary>
+    [Parameter] public IReadOnlyList<ListBoxItem<TValue>> Items { get; set; } = [];
+    /// <summary>Sets the selected value.</summary>
+    [Parameter] public TValue? Value { get; set; }
+    /// <summary>Runs when the selected value changes.</summary>
+    [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
+    /// <summary>Identifies the bound field in an EditForm.</summary>
+    [Parameter] public Expression<Func<TValue?>>? ValueExpression { get; set; }
+    /// <summary>Runs when an option is selected.</summary>
+    [Parameter] public EventCallback<ListBoxItem<TValue>> OnSelected { get; set; }
+    /// <summary>Displays a label above the control.</summary>
+    [Parameter] public string? Label { get; set; }
+    /// <summary>Sets the initial choice when Value is empty.</summary>
+    [Parameter] public ListBoxInitialSelection InitialSelection { get; set; }
+    /// <summary>Displays text while no value is selected.</summary>
+    [Parameter] public string? Placeholder { get; set; }
+    /// <summary>Allows the user to filter options.</summary>
+    [Parameter] public bool Search { get; set; }
+    /// <summary>Displays text in the search field.</summary>
+    [Parameter] public string? SearchPlaceholder { get; set; }
+    /// <summary>Labels the search field for assistive technology.</summary>
+    [Parameter] public string? SearchLabel { get; set; }
+    /// <summary>Displays text when no options match.</summary>
+    [Parameter] public string? NoResultsText { get; set; }
+    /// <summary>Renders custom content when no options match.</summary>
+    [Parameter] public RenderFragment? EmptyTemplate { get; set; }
+    /// <summary>Renders a custom option in the results list.</summary>
+    [Parameter] public RenderFragment<ListBoxItem<TValue>>? ItemTemplate { get; set; }
+    /// <summary>Shows a button that clears the selected value.</summary>
+    [Parameter] public bool Clearable { get; set; }
+    /// <summary>Labels the clear button for assistive technology.</summary>
+    [Parameter] public string? ClearLabel { get; set; }
+    /// <summary>Disables interaction.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Labels the list box for assistive technology.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Adds CSS classes to the control root.</summary>
+    [Parameter] public string? CssClass { get; set; }
+    [CascadingParameter] private EditContext? EditContext { get; set; }
+
+    private readonly string triggerId = $"bk-listbox-{Guid.NewGuid():N}";
+    private readonly string listId = $"bk-listbox-list-{Guid.NewGuid():N}";
+    private ElementReference root, searchInput;
+    private IJSObjectReference? module;
+    private DotNetObjectReference<ListBox<TValue>>? self;
+    private FieldIdentifier? fieldIdentifier;
+    private bool isOpen, focusSearch, initialized;
+    private int activeIndex = -1;
+    private string query = "";
+    private string PlaceholderText => Placeholder ?? Texts.Get("ListBox.Placeholder");
+    private string OptionId(int index) => $"{listId}-option-{index}";
+    private ListBoxItem<TValue>? SelectedItem => Items.FirstOrDefault(IsSelected);
+    private IReadOnlyList<ListBoxItem<TValue>> FilteredItems => string.IsNullOrWhiteSpace(query)
+        ? Items : Items.Where(item => item.Text.Contains(query, StringComparison.CurrentCultureIgnoreCase)).ToArray();
+    private bool HasValidationError => fieldIdentifier is { } id && EditContext?.GetValidationMessages(id).Any() == true;
+    private bool IsSelected(ListBoxItem<TValue> item) => Value is not null && EqualityComparer<TValue>.Default.Equals(Value, item.Value);
+    private RenderFragment OptionIcon(ListBoxItem<TValue> item) => builder =>
+    {
+        if (item.Icon is not null) { builder.OpenElement(0, "span"); builder.AddAttribute(1, "class", "bk-listbox-icon"); builder.AddContent(2, item.Icon); builder.CloseElement(); }
+        else if (!string.IsNullOrWhiteSpace(item.IconClass)) { builder.OpenElement(3, "i"); builder.AddAttribute(4, "class", "bk-listbox-icon " + item.IconClass); builder.CloseElement(); }
+        else if (!string.IsNullOrWhiteSpace(item.ImageSrc)) { builder.OpenElement(5, "img"); builder.AddAttribute(6, "class", "bk-listbox-icon"); builder.AddAttribute(7, "src", item.ImageSrc); builder.AddAttribute(8, "alt", ""); builder.CloseElement(); }
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ValueExpression is not null) fieldIdentifier = FieldIdentifier.Create(ValueExpression);
+        if (initialized) return;
+        if (Value is not null || InitialSelection == ListBoxInitialSelection.Placeholder) { initialized = true; return; }
+        var first = Items.FirstOrDefault(item => item.Enabled);
+        if (first is null) return;
+        initialized = true;
+        Value = first.Value;
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private async Task Toggle()
+    {
+        if (Disabled) return;
+        isOpen = !isOpen;
+        if (isOpen)
+        {
+            query = "";
+            activeIndex = FilteredItems.ToList().FindIndex(item => item.Enabled && IsSelected(item));
+            if (activeIndex < 0) activeIndex = FilteredItems.ToList().FindIndex(item => item.Enabled);
+            focusSearch = Search;
+        }
+        await Task.CompletedTask;
+    }
+
+    private void SearchInput(ChangeEventArgs args)
+    {
+        query = args.Value?.ToString() ?? "";
+        activeIndex = FilteredItems.ToList().FindIndex(item => item.Enabled);
+    }
+
+    private async Task Select(ListBoxItem<TValue> item)
+    {
+        if (!item.Enabled || Disabled) return;
+        isOpen = false;
+        query = "";
+        if (!IsSelected(item))
+        {
+            Value = item.Value;
+            await ValueChanged.InvokeAsync(Value);
+            NotifyFieldChanged();
+            await OnSelected.InvokeAsync(item);
+        }
+    }
+
+    private async Task Clear()
+    {
+        isOpen = false;
+        query = "";
+        Value = default;
+        initialized = true;
+        await ValueChanged.InvokeAsync(Value);
+        NotifyFieldChanged();
+    }
+
+    private void NotifyFieldChanged() { if (fieldIdentifier is { } id) EditContext?.NotifyFieldChanged(id); }
+
+    /// <summary>Closes the options when the user clicks outside.</summary>
+    [JSInvokable] public Task CloseAsync() { isOpen = false; return InvokeAsync(StateHasChanged); }
+
+    /// <summary>Handles list navigation from the keyboard.</summary>
+    [JSInvokable]
+    public async Task HandleKeyAsync(string key)
+    {
+        if (Disabled) return;
+        if (key == "Escape") { isOpen = false; await InvokeAsync(StateHasChanged); return; }
+        if (!isOpen) { if (key is "ArrowDown" or "ArrowUp") await Toggle(); return; }
+        var options = FilteredItems;
+        if (key == "Enter")
+        {
+            if (activeIndex >= 0 && activeIndex < options.Count) await Select(options[activeIndex]);
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+        if (options.Count == 0) return;
+        var direction = key == "ArrowUp" ? -1 : 1;
+        if (key is "Home" or "End")
+        {
+            activeIndex = key == "Home" ? options.ToList().FindIndex(item => item.Enabled) : options.ToList().FindLastIndex(item => item.Enabled);
+        }
+        else
+        {
+            var index = activeIndex;
+            for (var attempt = 0; attempt < options.Count; attempt++)
+            {
+                index = (index + direction + options.Count) % options.Count;
+                if (options[index].Enabled) { activeIndex = index; break; }
+            }
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorKinetix/list-box.js");
+            self = DotNetObjectReference.Create(this);
+            await module.InvokeVoidAsync("initialize", root, self);
+        }
+        if (focusSearch && isOpen) { focusSearch = false; await searchInput.FocusAsync(); }
+    }
+
+    /// <summary>Releases the list box interaction module.</summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (module is not null)
+        {
+            try { await module.InvokeVoidAsync("dispose", root); await module.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
+        }
+        self?.Dispose();
+    }
+}

@@ -1,0 +1,75 @@
+@inject KinetixTexts Texts
+
+<section class="section" id="tabs">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Tabs.Eyebrow")</span><div><h2>TabControl</h2><p>@T("Demo.Tabs.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card tab-demo-card">
+            <span class="eyebrow">TABCONTROL / 01</span><h3>@T("Demo.Tabs.Basic.Title")</h3><p>@T("Demo.Tabs.Basic.Description")</p>
+            <TabControl Items="@BasicItems" AriaLabel="@T("Demo.Tabs.Basic.Title")" KeepPanelsMounted="true" @bind-ActiveKey="basicKey">
+                <Content Context="key">
+                    @if (key == "overview")
+                    {
+                        <div class="tab-demo-content">
+                            <strong>@T("Demo.Tabs.Basic.OverviewBody")</strong>
+                            <div class="tab-demo-metrics"><div><span>@T("Demo.Tabs.Metric.Projects")</span><b>4</b></div><div><span>@T("Demo.Tabs.Metric.Tasks")</span><b>12</b></div></div>
+                        </div>
+                    }
+                    else if (key == "activity")
+                    {
+                        <div class="tab-demo-content">
+                            <strong>@T("Demo.Tabs.Basic.ActivityBody")</strong>
+                            <div class="tab-demo-event"><span class="tab-demo-dot"></span><span>@T("Demo.Tabs.Activity.First")</span><small>10:30</small></div>
+                            <div class="tab-demo-event"><span class="tab-demo-dot"></span><span>@T("Demo.Tabs.Activity.Second")</span><small>09:15</small></div>
+                        </div>
+                    }
+                </Content>
+            </TabControl>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("tabs-basic")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card tab-demo-card">
+            <span class="eyebrow">TABCONTROL / 02</span><h3>@T("Demo.Tabs.Custom.Title")</h3><p>@T("Demo.Tabs.Custom.Description")</p>
+            <TabControl Items="@CustomItems" AriaLabel="@T("Demo.Tabs.Custom.Title")" CssClass="demo-violet-tabs" @bind-ActiveKey="customKey">
+                <HeaderActions><button class="tab-demo-action" type="button" @onclick="AddItem">@T("Demo.Tabs.Custom.Action")</button></HeaderActions>
+                <Content Context="key">
+                    <div class="tab-demo-content">
+                        <strong>@(key == "files" ? T("Demo.Tabs.Custom.FilesBody") : T("Demo.Tabs.Custom.SettingsBody"))</strong>
+                        @if (key == "files")
+                        {
+                            <div class="tab-demo-event"><span class="tab-demo-file"></span><span>@T("Demo.Tabs.File.First")</span><small>PDF</small></div>
+                            <div class="tab-demo-event"><span class="tab-demo-file"></span><span>@T("Demo.Tabs.File.Second")</span><small>PNG</small></div>
+                            @if (addedCount > 0)
+                            {
+                                <div class="tab-demo-event"><span class="tab-demo-file"></span><span>@T("Demo.Tabs.File.Added")</span><small>@addedCount</small></div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="tab-demo-setting"><span>@T("Demo.Tabs.Setting.Notifications")</span><span class="tab-demo-switch" aria-hidden="true"></span></div>
+                            <div class="tab-demo-setting"><span>@T("Demo.Tabs.Setting.Access")</span><b>@T("Demo.Tabs.Setting.Team")</b></div>
+                        }
+                    </div>
+                </Content>
+            </TabControl>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("tabs-custom")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+</section>
+
+@code {
+    [Parameter] public EventCallback<string> OnShowCode { get; set; }
+    private string basicKey = "overview", customKey = "files";
+    private int addedCount;
+    private string T(string key) => Texts.Get(key);
+    private void AddItem() => addedCount++;
+    private IReadOnlyList<TabOption> BasicItems => [
+        new("overview", T("Demo.Tabs.Overview")),
+        new("activity", T("Demo.Tabs.Activity")),
+        new("billing", T("Demo.Tabs.Billing"), Enabled: false),
+        new("internal", "Internal", Visible: false)
+    ];
+    private RenderFragment FilesIcon => @<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7h7l2 2h9v10H3z" /></svg>;
+    private IReadOnlyList<TabOption> CustomItems => [
+        new("files", T("Demo.Tabs.Files"), Icon: FilesIcon),
+        new("settings", T("Demo.Tabs.Settings"), IconClass: "demo-tab-gear")
+    ];
+}

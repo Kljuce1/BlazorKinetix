@@ -1,0 +1,294 @@
+@namespace BlazorKinetix.Components
+@using BlazorKinetix.Core
+@using Microsoft.JSInterop
+@using System.Globalization
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject KinetixTexts Texts
+
+<div class="bk-nav-slot @(IsCollapsed ? "is-collapsed" : "") @(hoverExpanded ? "is-hover-expanded" : "") @(Sticky ? "is-sticky" : "") @CssClass" style="--bk-nav-sticky-top:@StickyTop" @ref="rootElement">
+    <button type="button" class="bk-nav-mobile-trigger" @ref="mobileTrigger" aria-label="@OpenLabel" aria-controls="@panelId" aria-expanded="@(mobileOpen ? "true" : "false")" @onclick="OpenMobile">
+        @if (MobileIcon is not null)
+        {
+            @MobileIcon
+        }
+        else if (!string.IsNullOrWhiteSpace(MobileIconClass))
+        {
+
+            <i class="@MobileIconClass" aria-hidden="true"></i>
+        }
+        else
+        {
+
+            <span class="bk-nav-hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+        }
+        <span>@(MobileTriggerText ?? Texts.Get("NavMenu.MobileTrigger"))</span>
+    </button>
+    <button type="button" class="bk-nav-backdrop @(mobileOpen ? "is-open" : "")" aria-label="@CloseLabel" tabindex="@(mobileOpen ? 0 : -1)" @onclick="CloseMobile"></button>
+    <aside id="@panelId" class="bk-nav-panel @(IsCollapsed ? "is-collapsed" : "") @(hoverExpanded ? "is-hover-expanded" : "") @(mobileOpen ? "is-mobile-open" : "")" aria-label="@(AriaLabel ?? Texts.Get("NavMenu.Label"))" @ref="panelElement" @onmouseenter="ExpandOnHover" @onmouseleave="RestoreAfterHover">
+        <div class="bk-nav-top">
+            <span class="bk-nav-title">@(Title ?? Texts.Get("NavMenu.Title"))</span>
+            <button type="button" class="bk-nav-toggle bk-nav-desktop-toggle" aria-label="@(IsCollapsed ? ExpandLabel ?? Texts.Get("NavMenu.Expand") : CollapseLabel ?? Texts.Get("NavMenu.Collapse"))" title="@(IsCollapsed ? ExpandLabel ?? Texts.Get("NavMenu.Expand") : CollapseLabel ?? Texts.Get("NavMenu.Collapse"))" @onclick="ToggleCollapse">
+                @if (IsCollapsed && !hoverExpanded && ExpandIcon is not null)
+                {
+                    @ExpandIcon
+                }
+                else if (IsCollapsed && !hoverExpanded && !string.IsNullOrWhiteSpace(ExpandIconClass))
+                {
+
+                    <i class="@ExpandIconClass" aria-hidden="true"></i>
+                }
+                else if ((!IsCollapsed || hoverExpanded) && CollapseIcon is not null)
+                {
+
+                    @CollapseIcon
+                }
+                else if ((!IsCollapsed || hoverExpanded) && !string.IsNullOrWhiteSpace(CollapseIconClass))
+                {
+
+                    <i class="@CollapseIconClass" aria-hidden="true"></i>
+                }
+                else
+                {
+
+                    <span class="bk-nav-toggle-symbol" aria-hidden="true">@(IsCollapsed && !hoverExpanded ? "»" : "«")</span>
+                }
+            </button>
+            <button type="button" class="bk-nav-toggle bk-nav-mobile-close" aria-label="@CloseLabel" title="@CloseLabel" @onclick="CloseMobile">
+                @if (CloseIcon is not null)
+                {
+                    @CloseIcon
+                }
+                else if (!string.IsNullOrWhiteSpace(CloseIconClass))
+                {
+
+                    <i class="@CloseIconClass" aria-hidden="true"></i>
+                }
+                else
+                {
+
+                    <span aria-hidden="true">×</span>
+                }
+            </button>
+        </div>
+        <nav class="bk-nav-links" aria-label="@(AriaLabel ?? Texts.Get("NavMenu.Label"))">
+            @foreach (var item in Items.Where(entry => entry.Visible))
+            {
+                var children = item.Children.Where(child => child.Visible).ToArray();
+                var hasChildren = children.Length > 0;
+                var active = IsActive(item) || children.Any(IsActive);
+                <div class="bk-nav-group">
+                    @if (hasChildren || string.IsNullOrWhiteSpace(item.Href) || !item.Enabled)
+                    {
+                        <button type="button" class="bk-nav-link @(active ? "is-active" : "")" disabled="@(!item.Enabled)" aria-current="@(IsActive(item) ? "page" : null)" aria-expanded="@(hasChildren ? (expanded.Contains(item.Key) && (!IsCollapsed || hoverExpanded || mobileOpen) ? "true" : "false") : null)" title="@item.Text" @onclick="() => SelectItem(item)">
+                            @ItemIcon(item)<span class="bk-nav-text">@item.Text</span>
+                            @if (hasChildren)
+                            {
+                                <span class="bk-nav-caret @(expanded.Contains(item.Key) ? "is-expanded" : "")" aria-hidden="true">⌄</span>
+                            }
+                        </button>
+                    }
+                    else
+                    {
+                        <a href="@item.Href" class="bk-nav-link @(active ? "is-active" : "")" aria-current="@(IsActive(item) ? "page" : null)" title="@item.Text" @onclick="() => SelectItem(item)" @onclick:preventDefault="true">
+                            @ItemIcon(item)<span class="bk-nav-text">@item.Text</span>
+                        </a>
+                    }
+                    @if (hasChildren)
+                    {
+                        <div class="bk-nav-submenu @(expanded.Contains(item.Key) && (!IsCollapsed || hoverExpanded || mobileOpen) ? "is-expanded" : "")">
+                            @foreach (var child in children)
+                            {
+                                var available = item.Enabled && child.Enabled;
+                                @if (available && !string.IsNullOrWhiteSpace(child.Href))
+                                {
+                                    <a href="@child.Href" class="bk-nav-sublink @(IsActive(child) ? "is-active" : "")" tabindex="@(expanded.Contains(item.Key) && (!IsCollapsed || hoverExpanded || mobileOpen) ? 0 : -1)" aria-current="@(IsActive(child) ? "page" : null)" title="@child.Text" @onclick="() => SelectItem(child)" @onclick:preventDefault="true">@ItemIcon(child)<span class="bk-nav-text">@child.Text</span></a>
+                                }
+                                else
+                                {
+                                    <button type="button" class="bk-nav-sublink @(IsActive(child) ? "is-active" : "")" disabled="@(!available)" tabindex="@(expanded.Contains(item.Key) && (!IsCollapsed || hoverExpanded || mobileOpen) ? 0 : -1)" aria-current="@(IsActive(child) ? "page" : null)" title="@child.Text" @onclick="() => SelectItem(child)">@ItemIcon(child)<span class="bk-nav-text">@child.Text</span></button>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </nav>
+        @if (FooterContent is not null || !string.IsNullOrWhiteSpace(FooterText))
+        {
+            <div class="bk-nav-footer">
+                @if (FooterContent is not null)
+                {
+                    @FooterContent
+                }
+                else
+                {
+                    @if (FooterIcon is not null)
+                    {
+                        <span class="bk-nav-icon" aria-hidden="true">@FooterIcon</span>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(FooterIconClass))
+                    {
+
+                        <i class="bk-nav-icon @FooterIconClass" aria-hidden="true"></i>
+                    }
+                    <span class="bk-nav-text">@FooterText</span>
+                }
+            </div>
+        }
+    </aside>
+</div>
+
+@code {
+    /// <summary>Displays the menu entries.</summary>
+    [Parameter] public IReadOnlyList<NavMenuItem> Items { get; set; } = [];
+    /// <summary>Marks the selected entry; when unset, URL entries follow the current route.</summary>
+    [Parameter] public string? SelectedKey { get; set; }
+    /// <summary>Runs when the selected entry changes.</summary>
+    [Parameter] public EventCallback<string?> SelectedKeyChanged { get; set; }
+    /// <summary>Runs when an entry without children is selected.</summary>
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+    /// <summary>Controls the desktop collapsed state.</summary>
+    [Parameter] public bool IsCollapsed { get; set; }
+    /// <summary>Runs when the desktop collapsed state changes.</summary>
+    [Parameter] public EventCallback<bool> IsCollapsedChanged { get; set; }
+    /// <summary>Expands a collapsed menu while the pointer is over it.</summary>
+    [Parameter] public bool AutoExpandOnHover { get; set; } = true;
+    /// <summary>Closes the mobile drawer after an entry is selected.</summary>
+    [Parameter] public bool AutoCloseOnSelect { get; set; } = true;
+    /// <summary>Displays the menu heading.</summary>
+    [Parameter] public string? Title { get; set; }
+    /// <summary>Sets the accessible navigation label.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Displays the mobile menu button label.</summary>
+    [Parameter] public string? MobileTriggerText { get; set; }
+    /// <summary>Sets the accessible mobile open label.</summary>
+    [Parameter] public string? MobileOpenLabel { get; set; }
+    /// <summary>Sets the accessible mobile close label.</summary>
+    [Parameter] public string? MobileCloseLabel { get; set; }
+    /// <summary>Sets the accessible desktop expand label.</summary>
+    [Parameter] public string? ExpandLabel { get; set; }
+    /// <summary>Sets the accessible desktop collapse label.</summary>
+    [Parameter] public string? CollapseLabel { get; set; }
+    /// <summary>Displays text at the bottom of the menu.</summary>
+    [Parameter] public string? FooterText { get; set; }
+    /// <summary>Displays custom footer content.</summary>
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+    /// <summary>Displays custom footer icon markup.</summary>
+    [Parameter] public RenderFragment? FooterIcon { get; set; }
+    /// <summary>Uses an icon class in the footer.</summary>
+    [Parameter] public string? FooterIconClass { get; set; }
+    /// <summary>Displays custom markup in the mobile trigger.</summary>
+    [Parameter] public RenderFragment? MobileIcon { get; set; }
+    /// <summary>Uses an icon class in the mobile trigger.</summary>
+    [Parameter] public string? MobileIconClass { get; set; }
+    /// <summary>Displays custom markup in the mobile close button.</summary>
+    [Parameter] public RenderFragment? CloseIcon { get; set; }
+    /// <summary>Uses an icon class in the mobile close button.</summary>
+    [Parameter] public string? CloseIconClass { get; set; }
+    /// <summary>Displays custom markup in the desktop expand button.</summary>
+    [Parameter] public RenderFragment? ExpandIcon { get; set; }
+    /// <summary>Uses an icon class in the desktop expand button.</summary>
+    [Parameter] public string? ExpandIconClass { get; set; }
+    /// <summary>Displays custom markup in the desktop collapse button.</summary>
+    [Parameter] public RenderFragment? CollapseIcon { get; set; }
+    /// <summary>Uses an icon class in the desktop collapse button.</summary>
+    [Parameter] public string? CollapseIconClass { get; set; }
+    /// <summary>Sticks the desktop menu to the viewport while scrolling.</summary>
+    [Parameter] public bool Sticky { get; set; }
+    /// <summary>Sets the sticky offset.</summary>
+    [Parameter] public string StickyTop { get; set; } = "0px";
+    /// <summary>Adds CSS classes to the menu root.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private readonly string panelId = $"bk-nav-{Guid.NewGuid():N}";
+    private readonly HashSet<string> expanded = [];
+    private ElementReference rootElement, mobileTrigger, panelElement;
+    private IJSObjectReference? module;
+    private DotNetObjectReference<NavMenu>? selfReference;
+    private bool mobileOpen, hoverExpanded;
+    private string OpenLabel => MobileOpenLabel ?? Texts.Get("NavMenu.Open");
+    private string CloseLabel => MobileCloseLabel ?? Texts.Get("NavMenu.Close");
+
+    protected override void OnParametersSet()
+    {
+        foreach (var item in Items.Where(item => item.Children.Any(IsActive))) expanded.Add(item.Key);
+    }
+
+    private bool IsActive(NavMenuItem item)
+    {
+        if (SelectedKey is not null) return SelectedKey == item.Key;
+        if (string.IsNullOrWhiteSpace(item.Href)) return false;
+        var current = new Uri(Navigation.Uri).AbsolutePath.TrimEnd('/');
+        var target = new Uri(new Uri(Navigation.BaseUri), item.Href).AbsolutePath.TrimEnd('/');
+        return string.Equals(current, target, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private RenderFragment ItemIcon(NavMenuItem item) => builder =>
+    {
+        var initials = item.Icon is null && string.IsNullOrWhiteSpace(item.IconClass) && string.IsNullOrWhiteSpace(item.ImageSrc);
+        builder.OpenElement(0, "span"); builder.AddAttribute(1, "class", initials ? "bk-nav-icon bk-nav-initials" : "bk-nav-icon"); builder.AddAttribute(2, "aria-hidden", "true");
+        if (item.Icon is not null) builder.AddContent(3, item.Icon);
+        else if (!string.IsNullOrWhiteSpace(item.IconClass)) { builder.OpenElement(4, "i"); builder.AddAttribute(5, "class", item.IconClass); builder.CloseElement(); }
+        else if (!string.IsNullOrWhiteSpace(item.ImageSrc)) { builder.OpenElement(6, "img"); builder.AddAttribute(7, "src", item.ImageSrc); builder.AddAttribute(8, "alt", ""); builder.CloseElement(); }
+        else builder.AddContent(9, GetInitials(item.Text));
+        builder.CloseElement();
+    };
+
+    private static string GetInitials(string text)
+    {
+        var words = text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (words.Length == 0) return "•";
+        var first = StringInfo.GetNextTextElement(words[0]);
+        if (words.Length == 1) return first.ToUpperInvariant();
+        return (first + StringInfo.GetNextTextElement(words[1])).ToUpperInvariant();
+    }
+
+    private async Task SelectItem(NavMenuItem item)
+    {
+        if (!item.Enabled) return;
+        if (item.Children.Any(child => child.Visible))
+        {
+            if (IsCollapsed && !mobileOpen) await SetCollapsed(false);
+            if (!expanded.Add(item.Key)) expanded.Remove(item.Key);
+            return;
+        }
+        await SelectedKeyChanged.InvokeAsync(item.Key);
+        await OnSelect.InvokeAsync(item.Key);
+        if (AutoCloseOnSelect) mobileOpen = false;
+        if (!string.IsNullOrWhiteSpace(item.Href)) Navigation.NavigateTo(item.Href);
+    }
+
+    private async Task SetCollapsed(bool value) { IsCollapsed = value; hoverExpanded = false; await IsCollapsedChanged.InvokeAsync(value); }
+    private async Task ToggleCollapse() => await SetCollapsed(!IsCollapsed);
+    private void ExpandOnHover() => hoverExpanded = IsCollapsed && AutoExpandOnHover;
+    private void RestoreAfterHover() => hoverExpanded = false;
+    private void OpenMobile() => mobileOpen = true;
+    private void CloseMobile() => mobileOpen = false;
+
+    /// <summary>Closes the mobile drawer after Escape.</summary>
+    [JSInvokable] public Task CloseFromKeyboard() { mobileOpen = false; return InvokeAsync(StateHasChanged); }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorKinetix/nav-menu.js");
+            selfReference = DotNetObjectReference.Create(this);
+            await module.InvokeVoidAsync("initialize", rootElement, mobileTrigger, panelElement, selfReference);
+        }
+        if (module is not null) await module.InvokeVoidAsync("setOpen", rootElement, mobileOpen);
+    }
+
+    /// <summary>Releases the mobile drawer module.</summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (module is not null)
+        {
+            try { await module.InvokeVoidAsync("dispose", rootElement); await module.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
+        }
+        selfReference?.Dispose();
+    }
+}

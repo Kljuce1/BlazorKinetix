@@ -1,0 +1,68 @@
+@inject KinetixTexts Texts
+
+<section class="section" id="pagination">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Pagination.Eyebrow")</span><div><h2>Pagination</h2><p>@T("Demo.Pagination.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card pagination-demo-card">
+            <span class="eyebrow">PAGINATION / 01</span><h3>@T("Demo.Pagination.Local.Title")</h3><p>@T("Demo.Pagination.Local.Description")</p>
+            <div class="pagination-demo-results" role="list">
+                @foreach (var item in localItems.Skip((localPage - 1) * localSize).Take(localSize))
+                {
+                    <div class="pagination-demo-row" role="listitem">
+                        <span class="pagination-demo-row-mark" aria-hidden="true">@item.ToString("00")</span>
+                        <span class="pagination-demo-row-copy"><strong>@T("Demo.Pagination.Local.Record") #@item</strong><small>@T("Demo.Pagination.Local.Detail") · @T(item % 2 == 0 ? "Demo.Pagination.Local.TeamB" : "Demo.Pagination.Local.TeamA")</small></span>
+                        <span class="pagination-demo-row-state">@T(item % 3 == 0 ? "Demo.Pagination.State.Review" : "Demo.Pagination.State.Active")</span>
+                    </div>
+                }
+            </div>
+            <Pagination TotalItems="@localItems.Count" PageSizes="@(new[] { 5, 10, 20 })" MaxVisiblePages="3"
+                        @bind-Page="localPage" @bind-PageSize="localSize" />
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("pagination-local")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card pagination-demo-card">
+            <span class="eyebrow">PAGINATION / 02</span><h3>@T("Demo.Pagination.Remote.Title")</h3><p>@T("Demo.Pagination.Remote.Description")</p>
+            <div class="pagination-demo-results @(remoteLoading ? "is-loading" : null)" role="list" aria-busy="@remoteLoading">
+                @if (remoteLoading)
+                {
+                    <div class="pagination-demo-loading" role="status"><span class="pagination-demo-spinner" aria-hidden="true"></span><span>@T("Demo.Pagination.Loading")</span></div>
+                }
+                else
+                {
+                    @foreach (var item in remoteItems)
+                    {
+                        <div class="pagination-demo-row" role="listitem">
+                            <span class="pagination-demo-row-mark" aria-hidden="true">@item.ToString("00")</span>
+                            <span class="pagination-demo-row-copy"><strong>@T("Demo.Pagination.Remote.Record") #@item</strong><small>@T("Demo.Pagination.Remote.Client") · @Customer(item)</small></span>
+                            <span class="pagination-demo-row-state">@T(item % 4 == 0 ? "Demo.Pagination.State.Pending" : "Demo.Pagination.State.Paid")</span>
+                        </div>
+                    }
+                }
+            </div>
+            <Pagination TotalItems="126" PageSizes="@(new[] { 5, 10, 20 })" ShowPageNumbers="false"
+                        Loading="@remoteLoading" OnChange="LoadRemoteAsync"
+                        @bind-Page="remotePage" @bind-PageSize="remoteSize" />
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("pagination-remote")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+</section>
+
+@code {
+    [Parameter] public EventCallback<string> OnShowCode { get; set; }
+    private readonly IReadOnlyList<int> localItems = Enumerable.Range(1, 43).ToArray();
+    private IReadOnlyList<int> remoteItems = [];
+    private int localPage = 1, localSize = 5, remotePage = 1, remoteSize = 5;
+    private bool remoteLoading;
+    private string T(string key) => Texts.Get(key);
+    private string Customer(int item) => T((item % 3) switch { 0 => "Demo.Pagination.Customer.Ana", 1 => "Demo.Pagination.Customer.Luis", _ => "Demo.Pagination.Customer.Marta" });
+
+    protected override async Task OnInitializedAsync() => await LoadRemoteAsync(new PaginationState(remotePage, remoteSize));
+
+    private async Task LoadRemoteAsync(PaginationState state)
+    {
+        remoteLoading = true;
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(350);
+        remoteItems = Enumerable.Range((state.Page - 1) * state.PageSize + 1, Math.Min(state.PageSize, 126 - (state.Page - 1) * state.PageSize)).ToArray();
+        remoteLoading = false;
+    }
+}

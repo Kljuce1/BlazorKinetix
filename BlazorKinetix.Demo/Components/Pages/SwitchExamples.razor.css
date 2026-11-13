@@ -1,0 +1,29 @@
+.switch-demo-card {
+    min-width: 0
+}
+
+.switch-demo-stage {
+    display: flex;
+    align-items: center;
+    min-height: 5rem;
+    margin-top: 1.5rem
+}
+
+    .switch-demo-stage ::deep .demo-plan-switch {
+        --bk-switch-on: #6c4bc5;
+        --bk-switch-on-text: #fff
+    }
+
+.switch-demo-selection {
+    color: var(--bk-muted,#66788a);
+    font-size: .85rem
+}
+
+.switch-demo-stage ::deep .bk-switch-segmented {
+    max-width: 100%
+}
+
+.switch-demo-stage ::deep .bk-switch-option {
+    min-width: 0;
+    padding: .55rem .7rem
+}

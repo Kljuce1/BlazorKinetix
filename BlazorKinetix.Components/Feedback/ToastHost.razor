@@ -1,0 +1,38 @@
+@namespace BlazorKinetix.Components
+@implements IDisposable
+@inject ToastService Notifications
+
+<div class="bk-toast-stack @CssClass">
+    @foreach (var notification in active)
+    {
+        var entry = notification;
+        <Toast @key="entry.Id" Inline="true" IsOpen="true" IsOpenChanged="open => VisibilityChanged(entry.Id, open)"
+               State="@entry.Options.State" Title="@entry.Options.Title" Message="@entry.Options.Message"
+               ActionText="@entry.Options.ActionText" OnAction="() => RunAction(entry.Options)"
+               Duration="@entry.Options.Duration" ShowClose="@entry.Options.ShowClose"
+               CloseLabel="@entry.Options.CloseLabel" Icon="@entry.Options.Icon"
+               IconClass="@entry.Options.IconClass" CssClass="@entry.Options.CssClass" />
+    }
+</div>
+
+@code {
+    /// <summary>Adds CSS classes to the stack.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private readonly List<ToastRequest> active = [];
+
+    protected override void OnInitialized() => Notifications.Shown += Add;
+
+    private void Add(ToastRequest request) => _ = InvokeAsync(() => { active.Add(request); StateHasChanged(); });
+
+    private void VisibilityChanged(Guid id, bool isOpen)
+    {
+        if (isOpen) return;
+        active.RemoveAll(item => item.Id == id);
+    }
+
+    private static Task RunAction(ToastOptions options) => options.OnAction?.Invoke() ?? Task.CompletedTask;
+
+    /// <summary>Stops listening for new notifications.</summary>
+    public void Dispose() => Notifications.Shown -= Add;
+}

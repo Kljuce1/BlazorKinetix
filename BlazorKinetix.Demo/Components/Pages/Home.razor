@@ -69,6 +69,11 @@
     </div>
 </section>
 
+<ListBoxExamples OnShowCode="ShowCode" />
+<AutocompleteExamples OnShowCode="ShowCode" />
+<FileUploadExamples OnShowCode="ShowCode" />
+<FormExamples OnShowCode="ShowCode" />
+
 <section class="section" id="buttons">
     <div class="section-heading"><span class="eyebrow">@T("Demo.Button.Eyebrow")</span><div><h2>Button</h2><p>@T("Demo.Button.Description")</p></div></div>
     <div class="showcase-grid">
@@ -103,6 +108,15 @@
 
 <NavigationExamples OnShowCode="ShowCode" />
 
+<TabExamples OnShowCode="ShowCode" />
+
+<SwitchExamples OnShowCode="ShowCode" />
+
+<MotionExamples OnShowCode="ShowCode" />
+
+<TableExamples OnShowCode="ShowCode" />
+<PaginationExamples OnShowCode="ShowCode" />
+
 <section class="section" id="tooltip">
     <div class="section-heading"><span class="eyebrow">@T("Demo.Tooltip.Eyebrow")</span><div><h2>Tooltip</h2><p>@T("Demo.Tooltip.Description")</p></div></div>
     <div class="card tooltip-card"><Tooltip Text="@T("Demo.Tooltip.Text")"><button class="hint-button" type="button">@T("Demo.Tooltip.Action")</button></Tooltip><p>@T("Demo.Tooltip.CardDescription")</p><button class="view-code" type="button" @onclick='() => ShowCode("tooltip")'>@T("Demo.Code.View")</button></div>
@@ -111,6 +125,13 @@
 <section class="section" id="modal">
     <div class="section-heading"><span class="eyebrow">@T("Demo.Modal.Eyebrow")</span><div><h2>Modal</h2><p>@T("Demo.Modal.Description")</p></div></div>
     <div class="card tooltip-card"><Button Text="@T("Demo.Modal.Open")" OnAction="() => detailsOpen = true" /><p>@T("Demo.Modal.CardDescription")</p><button class="view-code" type="button" @onclick='() => ShowCode("modal")'>@T("Demo.Code.View")</button></div>
+</section>
+
+<DialogExamples OnShowCode="ShowCode" />
+
+<section class="section" id="suggest-control">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Suggest.Eyebrow")</span><div><h2>@T("Demo.Suggest.Title")</h2><p>@T("Demo.Suggest.Description")</p></div></div>
+    <a class="hero-link" href="https://github.com/Kljuce1/BlazorKinetix/issues/new" target="_blank" rel="noopener noreferrer">@T("Demo.Suggest.Action") ↗</a>
 </section>
 
 <Modal Title="@T("Demo.Example." + selectedKey)" Size="ModalSize.Large" @bind-IsOpen="codeOpen">

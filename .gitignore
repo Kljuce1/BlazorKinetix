@@ -7,3 +7,4 @@
 *.nupkg
 *.snupkg
 BlazorKinetix.txt
+.table-chrome-profile/

@@ -1,0 +1,52 @@
+.bk-tooltip-host {
+    position: relative;
+    display: inline-flex;
+    max-width: 100%;
+}
+
+.bk-tooltip {
+    position: absolute;
+    z-index: 20;
+    width: max-content;
+    max-width: min(260px, 80vw);
+    padding: .42rem .65rem;
+    border-radius: var(--bk-tooltip-radius, .55rem);
+    background: var(--bk-tooltip-background, #182032);
+    color: var(--bk-tooltip-text, #fff);
+    box-shadow: 0 8px 24px #0003;
+    font-size: .78rem;
+    line-height: 1.35;
+    text-align: center;
+    pointer-events: none;
+}
+
+.bk-tooltip--top {
+    bottom: calc(100% + 9px);
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.bk-tooltip--bottom {
+    top: calc(100% + 9px);
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.bk-tooltip--left {
+    right: calc(100% + 9px);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.bk-tooltip--right {
+    left: calc(100% + 9px);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+@media (prefers-color-scheme:dark) {
+    .bk-tooltip {
+        background: var(--bk-tooltip-background,#e9eff8);
+        color: var(--bk-tooltip-text,#162233);
+    }
+}

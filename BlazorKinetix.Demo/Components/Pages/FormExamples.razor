@@ -1,0 +1,97 @@
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@implements IDisposable
+@inject KinetixTexts Texts
+
+<section class="section" id="form-field">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Form.Eyebrow")</span><div><h2>FormField · FormValidationSummary</h2><p>@T("Demo.Form.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card form-demo-card">
+            <span class="eyebrow">FORMFIELD / 01</span><h3>@T("Demo.Form.Fields.Title")</h3><p>@T("Demo.Form.Fields.Description")</p>
+            <EditForm EditContext="@editContext" OnValidSubmit="ValidSubmit">
+                <FormValidationSummary ShowWhenValid="@submitted" CssClass="mb-2" />
+                <FormField TValue="string" Label="@T("Demo.Form.Name")" Required="true"
+                           HelpText="@T("Demo.Form.Name.Help")" FieldExpression="@(() => form.Name)" CssClass="mb-2">
+                    <FieldTemplate Context="ids">
+                        <InputText id="@ids.InputId" aria-describedby="@($"{ids.HelpId} {ids.ErrorId}")" @bind-Value="form.Name" />
+                    </FieldTemplate>
+                </FormField>
+                <FormField TValue="string" Label="@T("Demo.Form.Email")" Required="true"
+                           FieldExpression="@(() => form.Email)">
+                    <FieldTemplate Context="ids">
+                        <InputText id="@ids.InputId" type="email" aria-describedby="@ids.ErrorId" @bind-Value="form.Email" />
+                    </FieldTemplate>
+                </FormField>
+                <button class="form-demo-submit mt-2" type="submit">@T("Demo.Form.Submit")</button>
+            </EditForm>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("form-field")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card form-demo-card">
+            <span class="eyebrow">FORMFIELD / 02</span><h3>@T("Demo.Form.Independent.Title")</h3><p>@T("Demo.Form.Independent.Description")</p>
+            <InputBox TValue="string" Title="@T("Demo.Form.Code")" Required="true" MinLength="4"
+                      LiveValidation="true" @bind-Value="code" />
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("form-independent")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+</section>
+
+@code {
+    [Parameter] public EventCallback<string> OnShowCode { get; set; }
+    private readonly ContactForm form = new();
+    private EditContext editContext = default!;
+    private ValidationMessageStore validationMessages = default!;
+    private string? code;
+    private bool submitted;
+    private string T(string key) => Texts.Get(key);
+    private void ValidSubmit() => submitted = true;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(form);
+        validationMessages = new ValidationMessageStore(editContext);
+        editContext.OnValidationRequested += ValidateForm;
+        editContext.OnFieldChanged += ValidateField;
+    }
+
+    private void ValidateForm(object? sender, ValidationRequestedEventArgs args)
+    {
+        validationMessages.Clear();
+        ValidateName();
+        ValidateEmail();
+        editContext.NotifyValidationStateChanged();
+    }
+
+    private void ValidateField(object? sender, FieldChangedEventArgs args)
+    {
+        validationMessages.Clear(args.FieldIdentifier);
+        if (args.FieldIdentifier.FieldName == nameof(ContactForm.Name)) ValidateName();
+        if (args.FieldIdentifier.FieldName == nameof(ContactForm.Email)) ValidateEmail();
+        editContext.NotifyValidationStateChanged();
+    }
+
+    private void ValidateName()
+    {
+        if (string.IsNullOrWhiteSpace(form.Name))
+            validationMessages.Add(new FieldIdentifier(form, nameof(ContactForm.Name)), T("Demo.Form.Name.Required"));
+    }
+
+    private void ValidateEmail()
+    {
+        if (string.IsNullOrWhiteSpace(form.Email))
+            validationMessages.Add(new FieldIdentifier(form, nameof(ContactForm.Email)), T("Demo.Form.Email.Required"));
+        else if (!new EmailAddressAttribute().IsValid(form.Email))
+            validationMessages.Add(new FieldIdentifier(form, nameof(ContactForm.Email)), T("Demo.Form.Email.Invalid"));
+    }
+
+    public void Dispose()
+    {
+        editContext.OnValidationRequested -= ValidateForm;
+        editContext.OnFieldChanged -= ValidateField;
+    }
+
+    private sealed class ContactForm
+    {
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+    }
+}

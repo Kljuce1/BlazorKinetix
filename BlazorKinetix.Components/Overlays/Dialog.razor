@@ -1,0 +1,213 @@
+@namespace BlazorKinetix.Components
+@using BlazorKinetix.Core
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject KinetixTexts Texts
+
+<dialog @ref="element" class="bk-dialog bk-dialog--@Mode.ToString().ToLowerInvariant() bk-dialog--@Animation.ToString().ToLowerInvariant() @CssClass"
+        aria-labelledby="@titleId" aria-describedby="@descriptionId" aria-modal="true">
+    <div class="bk-dialog-content">
+        @if (ShowCloseButton)
+        {
+            <button class="bk-dialog-close" type="button" aria-label="@(CloseLabel ?? Texts.Get("Modal.Close"))" disabled="@working" @onclick="CancelAsync">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 5 19 19M19 5 5 19" /></svg>
+            </button>
+        }
+        @if (Icon is not null || !string.IsNullOrWhiteSpace(IconClass) || Mode != DialogMode.Custom)
+        {
+            <div class="bk-dialog-icon" aria-hidden="true">
+                @if (Icon is not null)
+                {
+                    @Icon
+                }
+                else if (!string.IsNullOrWhiteSpace(IconClass))
+                {
+
+                    <i class="@IconClass"></i>
+                }
+                else
+                {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        @if (Mode == DialogMode.Information)
+                        {
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 11v5m0-8h.01" />
+                        }
+                        else if (Mode == DialogMode.Question)
+                        {
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4m0 3h.01" />
+                        }
+                        else if (Mode == DialogMode.Warning || Mode == DialogMode.Danger)
+                        {
+                            <path d="M12 3 2 21h20L12 3Z" />
+                            <path d="M12 9v5m0 3h.01" />
+                        }
+                        else if (Mode == DialogMode.Error)
+                        {
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="m9 9 6 6m0-6-6 6" />
+                        }
+                    </svg>
+                }
+            </div>
+        }
+        <h2 id="@titleId">@Title</h2>
+        <div id="@descriptionId" class="bk-dialog-body">
+            @if (ContentTemplate is not null)
+            {
+                @ContentTemplate
+            }
+            else if (!string.IsNullOrWhiteSpace(Message))
+            {
+
+                <p>@Message</p>
+            }
+        </div>
+        @if (!string.IsNullOrWhiteSpace(errorText))
+        {
+            <p class="bk-dialog-error" role="alert">@errorText</p>
+        }
+        <div class="bk-dialog-footer">
+            @if (FooterTemplate is not null)
+            {
+                @FooterTemplate
+            }
+            else
+            {
+                <button type="button" class="bk-dialog-button bk-dialog-button--cancel" disabled="@working" @onclick="CancelAsync">@(CancelText ?? Texts.Get("Dialog.Cancel"))</button>
+                <button type="button" class="bk-dialog-button bk-dialog-button--confirm" disabled="@working" @onclick="ConfirmAsync">
+                    @if (working)
+                    {
+                        <span class="bk-dialog-spinner" aria-hidden="true"></span>
+                    }
+                    @(working ? ProcessingText ?? Texts.Get("Dialog.Processing") : ConfirmText ?? Texts.Get("Dialog.Confirm"))
+                </button>
+            }
+        </div>
+    </div>
+</dialog>
+
+@code {
+    /// <summary>Displays the dialog heading.</summary>
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    /// <summary>Displays the default dialog message.</summary>
+    [Parameter] public string? Message { get; set; }
+    /// <summary>Sets the dialog's visual state.</summary>
+    [Parameter] public DialogMode Mode { get; set; } = DialogMode.Information;
+    /// <summary>Sets the entrance animation.</summary>
+    [Parameter] public DialogAnimation Animation { get; set; } = DialogAnimation.Grow;
+    /// <summary>Displays custom content in place of the message.</summary>
+    [Parameter] public RenderFragment? ContentTemplate { get; set; }
+    /// <summary>Displays custom actions in place of the default buttons.</summary>
+    [Parameter] public RenderFragment? FooterTemplate { get; set; }
+    /// <summary>Displays a custom icon.</summary>
+    [Parameter] public RenderFragment? Icon { get; set; }
+    /// <summary>Uses an icon class provided by the host application.</summary>
+    [Parameter] public string? IconClass { get; set; }
+    /// <summary>Controls the open state.</summary>
+    [Parameter] public bool IsOpen { get; set; }
+    /// <summary>Runs when the open state changes.</summary>
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    /// <summary>Runs when confirmation is requested.</summary>
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    /// <summary>Runs when the dialog is canceled or dismissed.</summary>
+    [Parameter] public EventCallback OnCancel { get; set; }
+    /// <summary>Sets the confirmation button text.</summary>
+    [Parameter] public string? ConfirmText { get; set; }
+    /// <summary>Sets the cancel button text.</summary>
+    [Parameter] public string? CancelText { get; set; }
+    /// <summary>Sets the confirmation button text while an action runs.</summary>
+    [Parameter] public string? ProcessingText { get; set; }
+    /// <summary>Sets the error text when confirmation fails.</summary>
+    [Parameter] public string? ErrorText { get; set; }
+    /// <summary>Shows the close button.</summary>
+    [Parameter] public bool ShowCloseButton { get; set; } = true;
+    /// <summary>Allows dismissal by clicking outside the dialog.</summary>
+    [Parameter] public bool AllowBackdropClose { get; set; } = true;
+    /// <summary>Allows dismissal with Escape.</summary>
+    [Parameter] public bool AllowEscape { get; set; } = true;
+    /// <summary>Sets the accessible close button label.</summary>
+    [Parameter] public string? CloseLabel { get; set; }
+    /// <summary>Adds CSS classes to the dialog.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private readonly string titleId = $"bk-dialog-title-{Guid.NewGuid():N}";
+    private readonly string descriptionId = $"bk-dialog-description-{Guid.NewGuid():N}";
+    private ElementReference element;
+    private IJSObjectReference? module;
+    private IJSObjectReference? instance;
+    private DotNetObjectReference<Dialog>? dotnet;
+    private bool working;
+    private string? errorText;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorKinetix/dialog.js");
+            dotnet = DotNetObjectReference.Create(this);
+            instance = await module.InvokeAsync<IJSObjectReference>("connect", element, dotnet, AllowBackdropClose, AllowEscape);
+        }
+        if (instance is not null) await instance.InvokeVoidAsync(IsOpen ? "show" : "close");
+    }
+
+    /// <summary>Opens the dialog.</summary>
+    public async Task OpenAsync()
+    {
+        errorText = null;
+        IsOpen = true;
+        await IsOpenChanged.InvokeAsync(true);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>Closes the dialog.</summary>
+    public async Task CloseAsync()
+    {
+        if (working) return;
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+        if (instance is not null) await instance.InvokeVoidAsync("close");
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (working) return;
+        working = true;
+        errorText = null;
+        await InvokeAsync(StateHasChanged);
+        try
+        {
+            await OnConfirm.InvokeAsync();
+            working = false;
+            await CloseAsync();
+        }
+        catch (Exception)
+        {
+            errorText = ErrorText ?? Texts.Get("Dialog.Error");
+            working = false;
+        }
+    }
+
+    private async Task CancelAsync()
+    {
+        if (working) return;
+        await CloseAsync();
+        await OnCancel.InvokeAsync();
+    }
+
+    [JSInvokable]
+    public Task RequestDismiss() => InvokeAsync(CancelAsync);
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (instance is not null) { await instance.InvokeVoidAsync("dispose"); await instance.DisposeAsync(); }
+            if (module is not null) await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException) { }
+        dotnet?.Dispose();
+    }
+}

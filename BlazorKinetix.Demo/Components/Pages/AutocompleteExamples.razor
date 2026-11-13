@@ -1,0 +1,48 @@
+@inject KinetixTexts Texts
+
+<section class="section" id="autocomplete">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Autocomplete.Eyebrow")</span><div><h2>Autocomplete</h2><p>@T("Demo.Autocomplete.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card autocomplete-demo-card">
+            <span class="eyebrow">AUTOCOMPLETE / 01</span><h3>@T("Demo.Autocomplete.Local.Title")</h3><p>@T("Demo.Autocomplete.Local.Description")</p>
+            <Autocomplete TValue="string" Items="@Cities" Label="@T("Demo.Autocomplete.City")" @bind-Value="city" />
+            <p class="autocomplete-demo-selection">@T("Demo.ListBox.Selected"): @(city ?? "—")</p>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("autocomplete-local")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card autocomplete-demo-card">
+            <span class="eyebrow">AUTOCOMPLETE / 02</span><h3>@T("Demo.Autocomplete.Remote.Title")</h3><p>@T("Demo.Autocomplete.Remote.Description")</p>
+            <Autocomplete TValue="string" SearchAsync="SearchPeopleAsync" MinCharacters="2" DebounceMilliseconds="300"
+                          Label="@T("Demo.Autocomplete.Person")" CssClass="demo-violet-autocomplete" @bind-Value="person">
+                <ItemTemplate Context="entry"><span class="autocomplete-person"><img src="@entry.ImageSrc" alt="" /><span><strong>@entry.Text</strong><small>@entry.Description</small></span></span></ItemTemplate>
+                <EmptyTemplate><span>@T("Demo.Autocomplete.Remote.Empty")</span></EmptyTemplate>
+            </Autocomplete>
+            <p class="autocomplete-demo-selection">@T("Demo.ListBox.Selected"): @(person ?? "—")</p>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("autocomplete-remote")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+</section>
+
+@code {
+    [Parameter] public EventCallback<string> OnShowCode { get; set; }
+    private string? city, person;
+    private string T(string key) => Texts.Get(key);
+    private IReadOnlyList<ListBoxItem<string>> Cities => [
+        new("Caracas", "Caracas", T("Demo.Autocomplete.City.Venezuela")),
+        new("Madrid", "Madrid", T("Demo.Autocomplete.City.Spain")),
+        new("Bogotá", "Bogotá", T("Demo.Autocomplete.City.Colombia")),
+        new("Lisboa", "Lisboa", T("Demo.Autocomplete.City.Portugal")),
+        new("Buenos Aires", "Buenos Aires", T("Demo.Autocomplete.City.Argentina"))
+    ];
+    private IReadOnlyList<ListBoxItem<string>> People => [
+        new("Alex Rivera", "Alex Rivera", T("Demo.ListBox.Person.Design"), ImageSrc: "/images/avatar-member.svg"),
+        new("Sam Lee", "Sam Lee", T("Demo.ListBox.Person.Development"), ImageSrc: "/images/avatar-member.svg"),
+        new("Morgan Park", "Morgan Park", T("Demo.ListBox.Person.Research"), ImageSrc: "/images/avatar-member.svg"),
+        new("Robin Chen", "Robin Chen", T("Demo.ListBox.Person.Design"), ImageSrc: "/images/avatar-member.svg")
+    ];
+    private async Task<IReadOnlyList<ListBoxItem<string>>> SearchPeopleAsync(string query, CancellationToken cancellationToken)
+    {
+        await Task.Delay(450, cancellationToken);
+        return People.Where(item => item.Text.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+            || item.Description?.Contains(query, StringComparison.CurrentCultureIgnoreCase) == true).ToArray();
+    }
+}

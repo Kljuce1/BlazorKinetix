@@ -1,0 +1,39 @@
+.dialog-demo-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start
+}
+
+    .dialog-demo-card > .view-code {
+        margin-top: auto
+    }
+
+    .dialog-demo-card > .bk-button {
+        margin-bottom: 1.5rem
+    }
+
+.dialog-demo-link {
+    border: 0;
+    background: transparent;
+    color: var(--bk-primary,#08777e);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer
+}
+
+.dialog-demo-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: 1.5rem
+}
+
+    .dialog-demo-actions button {
+        border: 1px solid var(--bk-border,#cbd5df);
+        border-radius: .5rem;
+        padding: .55rem .8rem;
+        background: var(--bk-soft-surface,#eef4f5);
+        color: var(--bk-text,#203044);
+        font: inherit;
+        cursor: pointer
+    }

@@ -1,0 +1,51 @@
+.autocomplete-demo-card {
+    min-width: 0
+}
+
+    .autocomplete-demo-card ::deep .bk-autocomplete {
+        margin-top: 1rem
+    }
+
+    .autocomplete-demo-card ::deep .demo-violet-autocomplete {
+        --bk-autocomplete-accent: #7556c9;
+        --bk-autocomplete-selected-bg: #7556c926
+    }
+
+.autocomplete-demo-selection {
+    min-height: 1.5rem !important;
+    margin: .8rem 0 0 !important;
+    color: var(--bk-muted,#66788a) !important;
+    font-size: .84rem !important
+}
+
+.autocomplete-person {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    min-width: 0
+}
+
+    .autocomplete-person img {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        object-fit: cover;
+        flex: none
+    }
+
+    .autocomplete-person > span {
+        display: grid;
+        gap: .1rem;
+        min-width: 0
+    }
+
+    .autocomplete-person strong, .autocomplete-person small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap
+    }
+
+    .autocomplete-person small {
+        color: var(--bk-muted,#66788a);
+        font-size: .76rem
+    }

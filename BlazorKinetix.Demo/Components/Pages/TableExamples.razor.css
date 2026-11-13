@@ -1,0 +1,118 @@
+.table-showcase {
+    grid-template-columns: repeat(2,minmax(0,1fr))
+}
+
+.table-demo-wide {
+    grid-column: 1/-1
+}
+
+.table-demo-card {
+    min-width: 0
+}
+
+.table-demo-frame {
+    min-width: 0;
+    max-width: 100%;
+    margin: .4rem 0 1rem
+}
+
+    .table-demo-frame ::deep .bk-table {
+        --bk-table-header-background: var(--bk-soft-surface);
+        --bk-table-radius: .75rem
+    }
+
+    .table-demo-frame ::deep .bk-table-detail-row .bk-table {
+        --bk-table-surface: var(--page-card)
+    }
+
+.table-person {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-width: 0
+}
+
+    .table-person img {
+        width: 2.4rem;
+        height: 2.4rem;
+        flex: none;
+        border-radius: .5rem;
+        object-fit: cover
+    }
+
+    .table-person span {
+        overflow-wrap: anywhere
+    }
+
+.table-detail h4 {
+    margin: 0 0 .7rem;
+    font-size: .93rem
+}
+
+.table-demo-buttons {
+    display: flex;
+    gap: .5rem;
+    margin: .2rem 0 .7rem
+}
+
+    .table-demo-buttons button {
+        padding: .55rem .8rem;
+        border: 1px solid var(--page-border);
+        border-radius: .55rem;
+        background: var(--page-card);
+        color: var(--bk-primary);
+        font: inherit;
+        font-size: .85rem;
+        font-weight: 700;
+        cursor: pointer
+    }
+
+.table-demo-state ::deep .bk-table {
+    min-height: 13rem
+}
+
+.table-empty-demo {
+    display: grid;
+    justify-items: center;
+    gap: .4rem
+}
+
+    .table-empty-demo > span {
+        font-size: 2rem;
+        color: var(--bk-primary)
+    }
+
+    .table-empty-demo p {
+        min-height: 0;
+        margin: 0;
+        text-align: center
+    }
+
+@media(max-width:900px) {
+    .table-showcase {
+        grid-template-columns: minmax(0,1fr)
+    }
+}
+
+.table-demo-frame ::deep .table-person {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-width: 0
+}
+
+    .table-demo-frame ::deep .table-person img {
+        display: block;
+        flex: none;
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: .5rem;
+        object-fit: cover
+    }
+
+    .table-demo-frame ::deep .table-person span {
+        min-width: 0;
+        white-space: normal;
+        word-break: normal;
+        overflow-wrap: anywhere
+    }

@@ -1,0 +1,26 @@
+.bk-toast-stack {
+    position: fixed;
+    z-index: 1100;
+    right: var(--bk-toast-right,1.25rem);
+    bottom: var(--bk-toast-bottom,1.25rem);
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: var(--bk-toast-gap,.65rem);
+    width: min(28rem,calc(100vw - 2rem));
+    max-height: calc(100dvh - 2.5rem);
+    overflow-y: auto;
+    pointer-events: none
+}
+
+    .bk-toast-stack ::deep .bk-toast {
+        pointer-events: auto
+    }
+
+@media(max-width:600px) {
+    .bk-toast-stack {
+        right: 1rem;
+        bottom: 1rem;
+        width: calc(100vw - 2rem)
+    }
+}

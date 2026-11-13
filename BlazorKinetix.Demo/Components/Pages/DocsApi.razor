@@ -1,0 +1,152 @@
+@using System.Globalization
+@inject KinetixTexts Texts
+
+@if (Rows.TryGetValue(Name, out var entries))
+{
+    <div class="docs-api">
+        <h3>@Texts.Get("Demo.Docs.Api")</h3>
+        <div class="docs-api-scroll">
+            <table>
+                <thead><tr><th>@Texts.Get("Demo.Docs.Parameter")</th><th>@Texts.Get("Demo.Docs.TypeOptions")</th><th>@Texts.Get("Demo.Docs.Usage")</th></tr></thead>
+                <tbody>
+                    @foreach (var entry in entries)
+                    {
+                        <tr><th scope="row"><code>@entry.Name</code></th><td><code>@entry.Type</code></td><td>@(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "es" ? entry.Es : entry.En)</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@foreach (var component in GetComponents(Name))
+{
+    if (DocsParameters.ByComponent.TryGetValue(component, out var parameters))
+    {
+        <div class="docs-api">
+            <h3>@component · @(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "es" ? "Todos los parámetros" : "All parameters")</h3>
+            <div class="docs-api-scroll">
+                <table>
+                    <thead><tr><th>@Texts.Get("Demo.Docs.Parameter")</th><th>@Texts.Get("Demo.Docs.TypeOptions")</th><th>@Texts.Get("Demo.Docs.Usage")</th></tr></thead>
+                    <tbody>
+                        @foreach (var parameter in parameters)
+                        {
+                            <tr><th scope="row"><code>@parameter.Name</code></th><td><code>@parameter.Type</code></td><td>@(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "es" ? DocsParameterDescriptions.GetSpanish(parameter.Name) : parameter.Description)</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+    private static IEnumerable<string> GetComponents(string name) => name switch
+    {
+        "FormField" => ["FormField", "FormValidationSummary"],
+        "Dates" => ["HorizontalDatePicker", "DatePicker", "DateRangePicker", "CalendarPanel"],
+        "Times" => ["TimePicker", "DateTimePicker", "TimeSlots"],
+        "Toast" => ["Toast", "ToastHost"],
+        _ => [name]
+    };
+    private sealed record Row(string Name, string Type, string En, string Es);
+    private static readonly IReadOnlyDictionary<string, Row[]> Rows = new Dictionary<string, Row[]>
+    {
+        ["InputBox"] = [
+            new("TValue / Value", "generic / nullable", "Value and two-way binding.", "Valor y enlace bidireccional."),
+            new("Kind", "Text · Integer · Decimal · Password", "Selects the input value type.", "Elige el tipo de valor."),
+            new("Appearance", "Normal · Gradient · Underline", "Selects the field appearance.", "Elige la apariencia del campo."),
+            new("LabelMode", "Above · Floating", "Controls label placement.", "Controla la posición de la etiqueta."),
+            new("Required / LiveValidation", "bool", "Controls required and live validation.", "Controla la obligatoriedad y validación en vivo."),
+            new("Action", "RenderFragment", "Places an action inside the field.", "Coloca una acción dentro del campo.")],
+        ["ListBox"] = [
+            new("Items", "ListBoxItem<TValue>[]", "Supplies choices with optional icon, image, and disabled state.", "Proporciona opciones con icono, imagen y estado deshabilitado opcionales."),
+            new("Value / ValueChanged", "TValue", "Selected value and change callback.", "Valor seleccionado y evento de cambio."),
+            new("InitialSelection", "Placeholder · First", "Chooses an initial value or placeholder.", "Elige valor inicial o mensaje de espera."),
+            new("Search / Clearable", "bool", "Enables filtering and clearing.", "Activa filtrado y limpieza."),
+            new("ItemTemplate / EmptyTemplate", "RenderFragment", "Customizes options or the empty state.", "Personaliza opciones o estado vacío.")],
+        ["Autocomplete"] = [
+            new("Items / SearchAsync", "list / async delegate", "Searches local or remote options.", "Busca opciones locales o remotas."),
+            new("Value / OnSelected", "TValue / callback", "Tracks the chosen option.", "Informa la opción elegida."),
+            new("MinCharacters / DebounceMilliseconds", "int", "Limits remote search frequency.", "Limita la frecuencia de búsquedas remotas."),
+            new("ItemTemplate / EmptyTemplate", "RenderFragment", "Customizes suggestions and no-match content.", "Personaliza sugerencias y contenido sin coincidencias.")],
+        ["FileUpload"] = [
+            new("Accept / MaxFileSize / MaxFiles", "string / bytes / int", "Limits selection before reading; validate again on the server.", "Limita la selección antes de leer; valida otra vez en el servidor."),
+            new("Multiple / AutoUpload", "bool", "Controls selection count and upload timing.", "Controla cantidad seleccionada e inicio de carga."),
+            new("UploadAsync", "FileUploadHandler", "Streams a file with progress and cancellation.", "Procesa un archivo con progreso y cancelación."),
+            new("ShowPreviews / MaxPreviewBytes", "bool / bytes", "Shows small image previews.", "Muestra vistas previas de imágenes pequeñas."),
+            new("OnFilesChanged / OnUploaded / OnUploadFailed", "callbacks", "Reports selection and upload results.", "Informa la selección y el resultado de la carga.")],
+        ["FormField"] = [
+            new("FieldExpression", "Expression<Func<TValue>>", "Connects messages to an EditForm field.", "Conecta mensajes con un campo de EditForm."),
+            new("Label / HelpText / Required", "string / bool", "Displays label, help, and required marker.", "Muestra etiqueta, ayuda y marca de obligatorio."),
+            new("FieldTemplate", "RenderFragment<FormFieldContext>", "Provides IDs for accessible field markup.", "Proporciona identificadores para marcado accesible."),
+            new("ErrorText / ShowAllErrors", "string / bool", "Overrides or expands displayed errors.", "Reemplaza o amplía los errores mostrados."),
+            new("FormValidationSummary", "ShowWhenValid / Title", "Summarizes EditForm messages.", "Resume los mensajes de EditForm.")],
+        ["Button"] = [
+            new("Mode", "Default · HoldToConfirm · ActionFeedback · SlideToConfirm", "Selects the interaction.", "Elige la interacción."),
+            new("Text / ProcessingText / SuccessText", "string", "Sets labels for each state.", "Define textos para cada estado."),
+            new("OnAction", "EventCallback", "Runs a sync or async action.", "Ejecuta una acción síncrona o asíncrona."),
+            new("Icon / IconClass / ImageSrc", "markup / class / URL", "Supplies a button visual.", "Proporciona un elemento visual al botón.")],
+        ["Switch"] = [
+            new("Mode", "Liquid · IconMorph · Checkbox · Segmented", "Selects the switch animation.", "Elige la animación del interruptor."),
+            new("Checked / CheckedChanged", "bool / callback", "Binds a binary state.", "Enlaza un estado binario."),
+            new("Items / SelectedKey", "SwitchOption[] / string", "Supplies and selects segmented options.", "Proporciona y selecciona opciones segmentadas.")],
+        ["Dates"] = [
+            new("StartDate / EndDate / MinDate / MaxDate", "DateOnly?", "Limits selectable dates.", "Limita las fechas seleccionables."),
+            new("DisabledDates / Availability", "lists", "Blocks days or adds availability details.", "Bloquea días o añade detalles de disponibilidad."),
+            new("Value / ValueChanged", "date / callback", "Binds the selected date or range.", "Enlaza la fecha o rango seleccionado.")],
+        ["Times"] = [
+            new("StepMinutes / MinTime / MaxTime", "int / TimeOnly?", "Generates and bounds time options.", "Genera y limita opciones horarias."),
+            new("Items / ItemsForDate", "lists / delegate", "Uses explicit slots, including date-specific slots.", "Usa horas explícitas, incluso según la fecha."),
+            new("DisabledTimes / DisabledTimesForDate", "lists / delegate", "Marks unavailable times.", "Marca horas no disponibles."),
+            new("Value / ValueChanged", "time or date-time / callback", "Binds the selection.", "Enlaza la selección.")],
+        ["NavMenu"] = [
+            new("Items", "NavMenuItem[]", "Defines links and nested groups.", "Define enlaces y grupos anidados."),
+            new("SelectedKey / OnSelect", "string / callback", "Tracks a selected menu item.", "Informa el elemento elegido."),
+            new("IsCollapsed / IsCollapsedChanged", "bool / callback", "Controls the narrow desktop state.", "Controla el estado estrecho en escritorio."),
+            new("CssClass", "string", "Adds host styling hooks.", "Añade una clase para estilos externos.")],
+        ["TabControl"] = [
+            new("Items", "TabOption[]", "Defines tab titles, icons, and disabled tabs.", "Define títulos, iconos y pestañas deshabilitadas."),
+            new("ActiveKey / ActiveKeyChanged", "string / callback", "Binds the active tab.", "Enlaza la pestaña activa."),
+            new("Content / HeaderActions", "RenderFragment", "Renders panels and header actions.", "Dibuja paneles y acciones de cabecera."),
+            new("KeepPanelsMounted", "bool", "Keeps inactive panels in the DOM.", "Conserva paneles inactivos en el DOM.")],
+        ["ActionMenu"] = [
+            new("Mode", "Fan · Dropdown", "Chooses the menu layout.", "Elige el diseño del menú."),
+            new("Items / OnSelect", "ActionMenuItem[] / callback", "Defines actions and reports selection.", "Define acciones e informa la selección."),
+            new("TriggerText / TriggerIconClass", "string", "Customizes the opening control.", "Personaliza el botón de apertura.")],
+        ["ProgressIndicator"] = [
+            new("Mode", "Linear · Ring", "Selects linear or circular progress.", "Elige progreso lineal o circular."),
+            new("Value / Items", "number / task list", "Sets percentage or steps.", "Define porcentaje o pasos."),
+            new("ShowDone / CompletedText", "bool / string", "Shows completion feedback.", "Muestra respuesta al completar.")],
+        ["Toast"] = [
+            new("ToastHost", "component", "Mount once in the app layout.", "Se monta una vez en el diseño de la app."),
+            new("ToastService.Show", "ToastOptions", "Displays and stacks messages.", "Muestra y apila mensajes."),
+            new("State", "Info · Success · Warning · Danger · Custom", "Sets the message state.", "Define el estado del mensaje."),
+            new("ActionText / OnAction", "string / callback", "Adds an optional action.", "Añade una acción opcional.")],
+        ["DataTable"] = [
+            new("Items / ItemsProvider", "list / async provider", "Loads rows locally or remotely.", "Carga filas locales o remotas."),
+            new("Columns", "DataTableColumn<T>[]", "Sets visibility, width, sorting, and cell templates.", "Define visibilidad, ancho, orden y plantillas de celdas."),
+            new("Mode / PageSizes", "Auto · Full · Paged · Infinite / int[]", "Chooses loading and pagination.", "Elige carga y paginación."),
+            new("DetailTemplate / HasDetails", "template / predicate", "Expands nested row content.", "Expande contenido anidado de la fila."),
+            new("Loading / EmptyTemplate", "bool / template", "Controls loading and empty states.", "Controla los estados de carga y vacío.")],
+        ["Pagination"] = [
+            new("Page / PageSize", "int", "Binds one-based page and item count.", "Enlaza página desde 1 y cantidad por página."),
+            new("TotalItems / PageSizes", "int / int[]", "Sets total items and size choices.", "Define total y opciones de tamaño."),
+            new("OnChange", "PaginationState callback", "Requests a new slice once per change.", "Solicita otro grupo una vez por cambio."),
+            new("ShowPageNumbers / MaxVisiblePages", "bool / int", "Controls numbered navigation.", "Controla la navegación numerada.")],
+        ["Tooltip"] = [
+            new("Text", "string", "Displays a short hint.", "Muestra una ayuda breve."),
+            new("ChildContent", "RenderFragment", "Wraps the element that reveals the hint.", "Envuelve el elemento que revela la ayuda.")],
+        ["Modal"] = [
+            new("Title / Size", "string / Compact · Medium · Large", "Sets heading and width.", "Define título y ancho."),
+            new("IsOpen / IsOpenChanged", "bool / callback", "Controls visibility.", "Controla la visibilidad."),
+            new("ChildContent / Footer", "RenderFragment", "Renders body and actions.", "Dibuja cuerpo y acciones.")],
+        ["Dialog"] = [
+            new("Mode", "Information · Question · Warning · Danger · Error · Custom", "Sets meaning and colors.", "Define significado y colores."),
+            new("Animation", "None · TopDrop · Swing · Unfold · Blur · Grow", "Sets entrance motion.", "Define el movimiento de entrada."),
+            new("OnConfirm / OnCancel", "callbacks", "Runs confirmation or dismissal.", "Ejecuta confirmación o cancelación."),
+            new("ContentTemplate / FooterTemplate", "RenderFragment", "Overrides the default body and actions.", "Reemplaza cuerpo y acciones predeterminados."),
+            new("ProcessingText / ErrorText", "string", "Labels async progress or failure.", "Etiqueta el proceso asíncrono o el error.")]
+    };
+}

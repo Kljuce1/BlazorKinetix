@@ -1,0 +1,36 @@
+@inject KinetixTexts Texts
+
+<section class="section" id="switches">
+    <div class="section-heading"><span class="eyebrow">@T("Demo.Switch.Eyebrow")</span><div><h2>Switch</h2><p>@T("Demo.Switch.Description")</p></div></div>
+    <div class="showcase-grid">
+        <article class="card switch-demo-card">
+            <span class="eyebrow">SWITCH / 01</span><h3>@T("Demo.Switch.Liquid.Title")</h3><p>@T("Demo.Switch.Liquid.Description")</p>
+            <div class="switch-demo-stage"><Switch Mode="SwitchMode.Liquid" Label="@T("Demo.Switch.Liquid.Label")" @bind-Checked="liquidOn" /></div>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("switch-liquid")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card switch-demo-card">
+            <span class="eyebrow">SWITCH / 03</span><h3>@T("Demo.Switch.Morph.Title")</h3><p>@T("Demo.Switch.Morph.Description")</p>
+            <div class="switch-demo-stage"><Switch Mode="SwitchMode.IconMorph" Label="@T("Demo.Switch.Morph.Label")" @bind-Checked="morphOn" /></div>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("switch-morph")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card switch-demo-card">
+            <span class="eyebrow">SWITCH / 05</span><h3>@T("Demo.Switch.Checkbox.Title")</h3><p>@T("Demo.Switch.Checkbox.Description")</p>
+            <div class="switch-demo-stage"><Switch Mode="SwitchMode.Checkbox" Label="@T("Demo.Switch.Checkbox.Label")" @bind-Checked="remember" /></div>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("switch-checkbox")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card switch-demo-card">
+            <span class="eyebrow">SWITCH / 06</span><h3>@T("Demo.Switch.Segmented.Title")</h3><p>@T("Demo.Switch.Segmented.Description")</p>
+            <div class="switch-demo-stage"><Switch Mode="SwitchMode.Segmented" Items="@Plans" AriaLabel="@T("Demo.Switch.Segmented.Title")" @bind-SelectedKey="plan" CssClass="demo-plan-switch" /></div>
+            <p class="switch-demo-selection">@T("Demo.Switch.Selected"): @Plans.First(option => option.Key == plan).Text</p>
+            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("switch-segmented")'>@T("Demo.Code.View")</button>
+        </article>
+    </div>
+</section>
+
+@code {
+    [Parameter] public EventCallback<string> OnShowCode { get; set; }
+    private bool liquidOn, morphOn, remember;
+    private string plan = "monthly";
+    private string T(string key) => Texts.Get(key);
+    private IReadOnlyList<SwitchOption> Plans => [new("weekly", T("Demo.Switch.Weekly")), new("monthly", T("Demo.Switch.Monthly")), new("yearly", T("Demo.Switch.Yearly"))];
+}

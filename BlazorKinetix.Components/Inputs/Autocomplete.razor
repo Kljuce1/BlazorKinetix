@@ -1,0 +1,288 @@
+@namespace BlazorKinetix.Components
+@typeparam TValue
+@implements IAsyncDisposable
+@using System.Linq.Expressions
+@using BlazorKinetix.Core
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@inject KinetixTexts Texts
+@inject IJSRuntime JS
+
+<div class="bk-autocomplete @(isOpen ? "is-open" : null) @(Disabled ? "is-disabled" : null) @(HasValidationError ? "is-invalid" : null) @CssClass" @ref="root">
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <label class="bk-autocomplete-label" for="@inputId">@Label</label>
+    }
+    <div class="bk-autocomplete-control">
+        <svg class="bk-autocomplete-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m16 16 5 5" /></svg>
+        <input @ref="input" id="@inputId" type="text" role="combobox" autocomplete="off"
+               aria-autocomplete="list" aria-expanded="@isOpen" aria-controls="@listId"
+               aria-activedescendant="@(isOpen && activeIndex >= 0 ? OptionId(activeIndex) : null)"
+               aria-invalid="@HasValidationError" aria-label="@(AriaLabel ?? Label ?? PlaceholderText)"
+               placeholder="@PlaceholderText" value="@query" disabled="@Disabled"
+               @oninput="InputChanged" @onfocus="Focus" />
+        @if (Clearable && !Disabled && (query.Length > 0 || Value is not null))
+        {
+            <button class="bk-autocomplete-clear" type="button" aria-label="@(ClearLabel ?? Texts.Get("ListBox.Clear"))" @onclick="ClearAsync">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m5 5 10 10m0-10L5 15" /></svg>
+            </button>
+        }
+    </div>
+    @if (isOpen)
+    {
+        <div id="@listId" class="bk-autocomplete-list" role="listbox" aria-label="@(AriaLabel ?? Label ?? PlaceholderText)">
+            @if (loading)
+            {
+                <div class="bk-autocomplete-status" role="status"><span class="bk-autocomplete-spinner" aria-hidden="true"></span>@(LoadingText ?? Texts.Get("Autocomplete.Loading"))</div>
+            }
+            else if (query.Length < MinCharacters)
+            {
+                <div class="bk-autocomplete-status" role="status">@(StartText ?? Texts.Get("Autocomplete.Start"))</div>
+            }
+            else if (results.Count == 0)
+            {
+                <div class="bk-autocomplete-status" role="status">
+                    @if (EmptyTemplate is not null)
+                    {
+                        @EmptyTemplate
+                    }
+                    else
+                    {
+
+                        @(NoResultsText ?? Texts.Get("ListBox.Empty"))
+                    }
+                </div>
+            }
+            else
+            {
+                @for (var index = 0; index < results.Count; index++)
+                {
+                    var item = results[index];
+                    <button id="@OptionId(index)" type="button" role="option"
+                            class="bk-autocomplete-option @(activeIndex == index ? "is-active" : null) @(IsSelected(item) ? "is-selected" : null)"
+                            aria-selected="@IsSelected(item)" disabled="@(!item.Enabled)" @onclick="() => SelectAsync(item)">
+                        @if (ItemTemplate is not null)
+                        {
+                            @ItemTemplate(item)
+                        }
+                        else
+                        {
+                            @OptionIcon(item)
+                            <span class="bk-autocomplete-option-text">
+                                <strong>@item.Text</strong>@if (!string.IsNullOrWhiteSpace(item.Description)) {
+                                <small>@item.Description</small>
+                            }
+                        </span>
+                    }
+                </button>
+            }
+        }
+    </div>
+}
+</div>
+
+@code {
+    /// <summary>Provides local suggestions when SearchAsync is not set.</summary>
+    [Parameter] public IReadOnlyList<ListBoxItem<TValue>> Items { get; set; } = [];
+    /// <summary>Loads suggestions for the entered text.</summary>
+    [Parameter] public Func<string, CancellationToken, Task<IReadOnlyList<ListBoxItem<TValue>>>>? SearchAsync { get; set; }
+    /// <summary>Sets the selected value.</summary>
+    [Parameter] public TValue? Value { get; set; }
+    /// <summary>Runs when the selected value changes.</summary>
+    [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
+    /// <summary>Identifies the bound field in an EditForm.</summary>
+    [Parameter] public Expression<Func<TValue?>>? ValueExpression { get; set; }
+    /// <summary>Runs after an option is selected.</summary>
+    [Parameter] public EventCallback<ListBoxItem<TValue>> OnSelected { get; set; }
+    /// <summary>Displays a label above the input.</summary>
+    [Parameter] public string? Label { get; set; }
+    /// <summary>Displays text when the input is empty.</summary>
+    [Parameter] public string? Placeholder { get; set; }
+    /// <summary>Displays text when no suggestions match.</summary>
+    [Parameter] public string? NoResultsText { get; set; }
+    /// <summary>Displays text while suggestions load.</summary>
+    [Parameter] public string? LoadingText { get; set; }
+    /// <summary>Displays text before enough characters are entered.</summary>
+    [Parameter] public string? StartText { get; set; }
+    /// <summary>Sets the minimum characters before loading suggestions.</summary>
+    [Parameter] public int MinCharacters { get; set; }
+    /// <summary>Sets the delay before an asynchronous search.</summary>
+    [Parameter] public int DebounceMilliseconds { get; set; } = 250;
+    /// <summary>Renders custom content for an option.</summary>
+    [Parameter] public RenderFragment<ListBoxItem<TValue>>? ItemTemplate { get; set; }
+    /// <summary>Renders custom content when no suggestions match.</summary>
+    [Parameter] public RenderFragment? EmptyTemplate { get; set; }
+    /// <summary>Shows a button to clear the input and value.</summary>
+    [Parameter] public bool Clearable { get; set; } = true;
+    /// <summary>Labels the clear button for assistive technology.</summary>
+    [Parameter] public string? ClearLabel { get; set; }
+    /// <summary>Disables interaction.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Labels the input for assistive technology.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Adds CSS classes to the control root.</summary>
+    [Parameter] public string? CssClass { get; set; }
+    [CascadingParameter] private EditContext? EditContext { get; set; }
+
+    private readonly string inputId = $"bk-autocomplete-{Guid.NewGuid():N}";
+    private readonly string listId = $"bk-autocomplete-list-{Guid.NewGuid():N}";
+    private ElementReference root, input;
+    private IJSObjectReference? module;
+    private DotNetObjectReference<Autocomplete<TValue>>? self;
+    private CancellationTokenSource? searchCancellation;
+    private FieldIdentifier? fieldIdentifier;
+    private ListBoxItem<TValue>? chosen;
+    private IReadOnlyList<ListBoxItem<TValue>> results = [];
+    private string query = "";
+    private bool isOpen, loading;
+    private int activeIndex = -1;
+    private string PlaceholderText => Placeholder ?? Texts.Get("Autocomplete.Placeholder");
+    private bool HasValidationError => fieldIdentifier is { } id && EditContext?.GetValidationMessages(id).Any() == true;
+    private string OptionId(int index) => $"{listId}-option-{index}";
+    private bool IsSelected(ListBoxItem<TValue> item) => Value is not null && EqualityComparer<TValue>.Default.Equals(Value, item.Value);
+    private RenderFragment OptionIcon(ListBoxItem<TValue> item) => builder =>
+    {
+        if (item.Icon is not null) { builder.OpenElement(0, "span"); builder.AddAttribute(1, "class", "bk-autocomplete-icon"); builder.AddContent(2, item.Icon); builder.CloseElement(); }
+        else if (!string.IsNullOrWhiteSpace(item.IconClass)) { builder.OpenElement(3, "i"); builder.AddAttribute(4, "class", "bk-autocomplete-icon " + item.IconClass); builder.CloseElement(); }
+        else if (!string.IsNullOrWhiteSpace(item.ImageSrc)) { builder.OpenElement(5, "img"); builder.AddAttribute(6, "class", "bk-autocomplete-icon"); builder.AddAttribute(7, "src", item.ImageSrc); builder.AddAttribute(8, "alt", ""); builder.CloseElement(); }
+    };
+
+    protected override void OnParametersSet()
+    {
+        if (ValueExpression is not null) fieldIdentifier = FieldIdentifier.Create(ValueExpression);
+        if (Value is null) { if (chosen is not null) query = ""; chosen = null; return; }
+        if (chosen is not null && IsSelected(chosen)) return;
+        chosen = Items.FirstOrDefault(IsSelected) ?? results.FirstOrDefault(IsSelected);
+        if (chosen is not null) query = chosen.Text;
+    }
+
+    private async Task Focus()
+    {
+        if (Disabled) return;
+        isOpen = true;
+        await SearchNowAsync(query, false);
+    }
+
+    private async Task InputChanged(ChangeEventArgs args)
+    {
+        query = args.Value?.ToString() ?? "";
+        isOpen = true;
+        if (Value is not null)
+        {
+            Value = default;
+            chosen = null;
+            await ValueChanged.InvokeAsync(Value);
+            NotifyFieldChanged();
+        }
+        await SearchNowAsync(query, true);
+    }
+
+    private async Task SearchNowAsync(string text, bool debounce)
+    {
+        searchCancellation?.Cancel();
+        searchCancellation?.Dispose();
+        var cancellation = new CancellationTokenSource();
+        searchCancellation = cancellation;
+        activeIndex = -1;
+        if (text.Length < MinCharacters) { loading = false; results = []; return; }
+        if (SearchAsync is null)
+        {
+            loading = false;
+            results = Items.Where(item => item.Text.Contains(text, StringComparison.CurrentCultureIgnoreCase)
+                || item.Description?.Contains(text, StringComparison.CurrentCultureIgnoreCase) == true).ToArray();
+        }
+        else
+        {
+            loading = true;
+            await InvokeAsync(StateHasChanged);
+            try
+            {
+                if (debounce && DebounceMilliseconds > 0) await Task.Delay(DebounceMilliseconds, cancellation.Token);
+                var loaded = await SearchAsync(text, cancellation.Token);
+                if (cancellation.IsCancellationRequested) return;
+                results = loaded ?? [];
+            }
+            catch (OperationCanceledException) { return; }
+            catch (Exception) { if (!cancellation.IsCancellationRequested) results = []; }
+            finally { if (!cancellation.IsCancellationRequested) loading = false; }
+        }
+        activeIndex = results.ToList().FindIndex(item => item.Enabled);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SelectAsync(ListBoxItem<TValue> item)
+    {
+        if (!item.Enabled || Disabled) return;
+        searchCancellation?.Cancel();
+        chosen = item;
+        query = item.Text;
+        Value = item.Value;
+        isOpen = false;
+        await ValueChanged.InvokeAsync(Value);
+        NotifyFieldChanged();
+        await OnSelected.InvokeAsync(item);
+    }
+
+    private async Task ClearAsync()
+    {
+        searchCancellation?.Cancel();
+        query = "";
+        chosen = null;
+        Value = default;
+        isOpen = false;
+        await ValueChanged.InvokeAsync(Value);
+        NotifyFieldChanged();
+    }
+
+    private void NotifyFieldChanged() { if (fieldIdentifier is { } id) EditContext?.NotifyFieldChanged(id); }
+
+    [JSInvokable] public Task CloseAsync() { isOpen = false; return InvokeAsync(StateHasChanged); }
+
+    [JSInvokable]
+    public async Task HandleKeyAsync(string key)
+    {
+        if (Disabled) return;
+        if (key == "Escape") { isOpen = false; await InvokeAsync(StateHasChanged); return; }
+        if (!isOpen) { isOpen = true; await SearchNowAsync(query, false); return; }
+        if (key == "Enter")
+        {
+            if (activeIndex >= 0 && activeIndex < results.Count) await SelectAsync(results[activeIndex]);
+            return;
+        }
+        if (results.Count == 0) return;
+        var index = activeIndex;
+        if (key == "Home") index = results.ToList().FindIndex(item => item.Enabled);
+        else if (key == "End") index = results.ToList().FindLastIndex(item => item.Enabled);
+        else
+        {
+            var direction = key == "ArrowUp" ? -1 : 1;
+            for (var attempt = 0; attempt < results.Count; attempt++)
+            {
+                index = (index + direction + results.Count) % results.Count;
+                if (results[index].Enabled) break;
+            }
+        }
+        activeIndex = index;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorKinetix/autocomplete.js");
+        self = DotNetObjectReference.Create(this);
+        await module.InvokeVoidAsync("initialize", root, self);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        searchCancellation?.Cancel();
+        searchCancellation?.Dispose();
+        if (module is not null)
+        {
+            try { await module.InvokeVoidAsync("dispose", root); await module.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
+        }
+        self?.Dispose();
+    }
+}

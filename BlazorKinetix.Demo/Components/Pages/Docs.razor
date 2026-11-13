@@ -2,24 +2,123 @@
 @inject KinetixTexts Texts
 
 <PageTitle>@T("Demo.Docs.PageTitle")</PageTitle>
-<div class="docs">
+<div class="docs-layout">
+<aside class="docs-sidebar"><DocsNav /></aside>
+<details class="docs-mobile-menu"><summary>@T("Demo.Docs.Navigation")</summary><DocsNav /></details>
+<div class="docs" id="start">
     <a href="/">@T("Demo.Docs.Back")</a>
     <span class="eyebrow">@T("Demo.Docs.Eyebrow")</span>
     <h1>@T("Demo.Docs.Title")</h1>
     <p>@T("Demo.Docs.Intro")</p>
 
+    <p>@T("Demo.Docs.IntroductionBody")</p>
+    <h2 id="installation">@T("Demo.Docs.Installation")</h2>
+    <p>@T("Demo.Docs.InstallBody")</p>
+    <pre><code>&lt;ProjectReference Include="..\BlazorKinetix.Components\BlazorKinetix.Components.csproj" /&gt;
+
+@@using BlazorKinetix.Components
+@@using BlazorKinetix.Core</code></pre>
     <h2>@T("Demo.Docs.Register")</h2>
     <pre><code>builder.Services.AddBlazorKinetix();</code></pre>
     <p>@T("Demo.Docs.RegisterBody")</p>
 
-    <h2>InputBox</h2>
+    <h2 id="theme">@T("Demo.Docs.Theme")</h2>
+    <pre><code>:root {
+  --bk-primary: #075b62;
+  --bk-surface: #fff;
+  --bk-text: #243447;
+  --bk-gradient-start: #7159ed;
+  --bk-gradient-end: #20c4e2;
+}</code></pre>
+    <p>@T("Demo.Docs.ThemeBody")</p>
+    <p>@T("Demo.Docs.CultureBody")</p>
+
+    <h2 id="inputbox">InputBox</h2>
     <pre><code>&lt;InputBox TValue="string" Title="Email" Email="true"
           Appearance="InputBoxAppearance.Gradient"
           LabelMode="InputBoxLabelMode.Floating"
           LiveValidation="true" @@bind-Value="email" /&gt;</code></pre>
     <p>@T("Demo.Docs.InputBody")</p>
+    <DocsApi Name="InputBox" />
 
-    <h2>Button</h2>
+    <h2 id="listbox">ListBox</h2>
+    <pre><code>&lt;ListBox TValue="string" Items="@@projects" Label="Project"
+             Search="true" Clearable="true"
+             InitialSelection="ListBoxInitialSelection.Placeholder"
+             @@bind-Value="project" /&gt;
+
+@@code {
+    private string? project;
+    private IReadOnlyList&lt;ListBoxItem&lt;string&gt;&gt; projects = [
+        new("aurora", "Aurora", IconClass: "fa-solid fa-star"),
+        new("archive", "Archive", Enabled: false)
+    ];
+}</code></pre>
+    <p>@T("Demo.Docs.ListBoxBody")</p>
+    <DocsApi Name="ListBox" />
+
+    <h2 id="autocomplete">Autocomplete</h2>
+    <pre><code>&lt;Autocomplete TValue="string" Items="@@cities" Label="City"
+                  @@bind-Value="city" /&gt;
+
+&lt;Autocomplete TValue="string" SearchAsync="SearchPeopleAsync"
+                  MinCharacters="2" DebounceMilliseconds="300"
+                  @@bind-Value="person" /&gt;
+
+@@code {
+    private async Task&lt;IReadOnlyList&lt;ListBoxItem&lt;string&gt;&gt;&gt; SearchPeopleAsync(
+        string query, CancellationToken cancellationToken)
+    {
+        return await service.SearchAsync(query, cancellationToken);
+    }
+}</code></pre>
+    <p>@T("Demo.Docs.AutocompleteBody")</p>
+    <DocsApi Name="Autocomplete" />
+
+    <h2 id="fileupload">FileUpload</h2>
+    <pre><code>&lt;FileUpload Label="Documents" Accept=".txt" Multiple="true"
+            MaxFiles="2" MaxFileSize="262144" AutoUpload="false"
+            UploadAsync="UploadAsync" /&gt;
+
+@@code {
+    private async Task UploadAsync(IBrowserFile file, IProgress&lt;long&gt; progress,
+        CancellationToken token)
+    {
+        await using var source = file.OpenReadStream(262144, token);
+        // Read bounded chunks, validate the content, and save to trusted storage.
+    }
+}</code></pre>
+    <p>@T("Demo.Docs.FileUploadBody")</p>
+    <DocsApi Name="FileUpload" />
+
+    <h2 id="formfield">FormField · FormValidationSummary</h2>
+    <pre><code>&lt;EditForm EditContext="@@editContext" OnValidSubmit="Save"&gt;
+    &lt;FormValidationSummary /&gt;
+    &lt;FormField TValue="string" Label="Name" Required="true"
+               HelpText="Shown on your profile"
+               FieldExpression="@@(() =&gt; model.Name)"&gt;
+        &lt;FieldTemplate Context="ids"&gt;
+            &lt;InputText id="@@ids.InputId" aria-describedby="@@($"{ids.HelpId} {ids.ErrorId}")"
+                       @@bind-Value="model.Name" /&gt;
+        &lt;/FieldTemplate&gt;
+    &lt;/FormField&gt;
+&lt;/EditForm&gt;</code></pre>
+    <p>@T("Demo.Docs.FormBody")</p>
+    <DocsApi Name="FormField" />
+
+    <h2 id="pagination">Pagination</h2>
+    <pre><code>&lt;Pagination TotalItems="@@totalCount" PageSizes="@@(new[] { 10, 25, 50 })"
+            @@bind-Page="page" @@bind-PageSize="pageSize"
+            Loading="@@loading" OnChange="LoadAsync" /&gt;
+
+@@code {
+    private Task LoadAsync(PaginationState state) =&gt;
+        service.LoadAsync(state.Page, state.PageSize);
+}</code></pre>
+    <p>@T("Demo.Docs.PaginationBody")</p>
+    <DocsApi Name="Pagination" />
+
+    <h2 id="button">Button</h2>
     <pre><code>&lt;Button Text="Save" OnAction="SaveAsync"
                ProcessingText="Saving…" /&gt;
 
@@ -27,14 +126,33 @@
         Text="Apply" FeedbackText="Applied!"
         OnAction="Apply" /&gt;</code></pre>
     <p>@T("Demo.Docs.ButtonBody")</p>
+    <DocsApi Name="Button" />
 
-    <h2>Tooltip</h2>
+    <h2 id="switch">Switch</h2>
+    <pre><code>&lt;Switch Mode="SwitchMode.IconMorph" Label="Automatic sync"
+            @@bind-Checked="autoSync" /&gt;
+
+&lt;Switch Mode="SwitchMode.Segmented" Items="@@plans"
+        AriaLabel="Billing period" @@bind-SelectedKey="period" /&gt;
+
+@@code {
+    private bool autoSync;
+    private string period = "monthly";
+    private IReadOnlyList&lt;SwitchOption&gt; plans = [
+        new("monthly", "Monthly"), new("yearly", "Yearly")
+    ];
+}</code></pre>
+    <p>@T("Demo.Docs.SwitchBody")</p>
+    <DocsApi Name="Switch" />
+
+    <h2 id="tooltip">Tooltip</h2>
     <pre><code>&lt;Tooltip Text="More details here"&gt;
     &lt;button type="button"&gt;Details&lt;/button&gt;
 &lt;/Tooltip&gt;</code></pre>
     <p>@T("Demo.Docs.TooltipBody")</p>
+    <DocsApi Name="Tooltip" />
 
-    <h2>Modal</h2>
+    <h2 id="modal">Modal</h2>
     <pre><code>&lt;Button Text="Open details" OnAction="() =&gt; detailsOpen = true" /&gt;
 
 &lt;Modal Title="Details" Size="ModalSize.Compact"
@@ -42,8 +160,17 @@
     &lt;p&gt;Place any Razor content here.&lt;/p&gt;
 &lt;/Modal&gt;</code></pre>
     <p>@T("Demo.Docs.ModalBody")</p>
+    <DocsApi Name="Modal" />
 
-    <h2>HorizontalDatePicker · DatePicker · DateRangePicker</h2>
+    <h2 id="dialog">Dialog</h2>
+    <pre><code>&lt;Dialog Title="Delete item?" Message="This action cannot be undone."
+        Mode="DialogMode.Danger" Animation="DialogAnimation.Swing"
+        ConfirmText="Delete" ProcessingText="Deleting…"
+        OnConfirm="DeleteAsync" @@bind-IsOpen="deleteOpen" /&gt;</code></pre>
+    <p>@T("Demo.Docs.DialogBody")</p>
+    <DocsApi Name="Dialog" />
+
+    <h2 id="datepickers">HorizontalDatePicker · DatePicker · DateRangePicker</h2>
     <pre><code>&lt;HorizontalDatePicker StartDate="@@today" EndDate="@@today.AddDays(13)"
     DisabledDates="@@unavailable" Availability="@@fares"
     @@bind-Value="departure" /&gt;
@@ -53,7 +180,8 @@
 
 &lt;DateRangePicker MinDate="@@today" @@bind-Value="range"
     RangeChanged="Search" /&gt;</code></pre>
-    <h2>TimePicker · DateTimePicker</h2>
+    <DocsApi Name="Dates" />
+    <h2 id="timepickers">TimePicker · DateTimePicker</h2>
     <pre><code>&lt;TimePicker StepMinutes="30" @@bind-Value="time" /&gt;
 &lt;TimePicker Items="@@timesFromDatabase" @@bind-Value="departureTime" /&gt;
 &lt;DateTimePicker MinDate="@@today" StepMinutes="30"
@@ -62,8 +190,9 @@
     @@bind-Value="appointment" /&gt;</code></pre>
     <p>@T("Demo.Docs.DateBody")</p>
     <p>@T("Demo.Docs.TimeItemsBody")</p>
+    <DocsApi Name="Times" />
 
-    <h2>NavMenu</h2>
+    <h2 id="navmenu">NavMenu</h2>
     <pre><code>&lt;NavMenu Items="@@menuItems" Title="Workspace"
          @@bind-SelectedKey="selectedKey"
          @@bind-IsCollapsed="collapsed" /&gt;
@@ -78,17 +207,86 @@
     ];
 }</code></pre>
     <p>@T("Demo.Docs.NavBody")</p>
+    <DocsApi Name="NavMenu" />
 
-    <h2>@T("Demo.Docs.Theme")</h2>
-    <pre><code>:root {
-  --bk-primary: #075b62;
-  --bk-surface: #fff;
-  --bk-text: #243447;
-  --bk-gradient-start: #7159ed;
-  --bk-gradient-end: #20c4e2;
-  --bk-nav-accent: #6c4bc5;
+    <h2 id="tabcontrol">TabControl</h2>
+    <pre><code>&lt;TabControl Items="@@tabs" @@bind-ActiveKey="activeTab"
+            KeepPanelsMounted="true" CssClass="my-tabs"&gt;
+    &lt;HeaderActions&gt;&lt;button type="button"&gt;Add&lt;/button&gt;&lt;/HeaderActions&gt;
+    &lt;Content Context="key"&gt;
+        &lt;p&gt;@@key content&lt;/p&gt;
+    &lt;/Content&gt;
+&lt;/TabControl&gt;
+
+@@code {
+    private string activeTab = "overview";
+    private IReadOnlyList&lt;TabOption&gt; tabs = [
+        new("overview", "Overview"),
+        new("activity", "Activity", IconClass: "fa-solid fa-clock"),
+        new("billing", "Billing", Enabled: false)
+    ];
 }</code></pre>
-    <p>@T("Demo.Docs.ThemeBody")</p>
+    <p>@T("Demo.Docs.TabsBody")</p>
+    <DocsApi Name="TabControl" />
+
+    <h2 id="actionmenu">ActionMenu</h2>
+    <pre><code>&lt;ActionMenu Mode="ActionMenuMode.Fan" Items="@@actions"
+            AriaLabel="Quick actions" OnSelect="HandleAction" /&gt;
+
+&lt;ActionMenu Mode="ActionMenuMode.Dropdown" Items="@@actions"
+            TriggerText="Menu" TriggerIconClass="fa-solid fa-bars"
+            OnSelect="HandleAction" /&gt;</code></pre>
+    <p>@T("Demo.Docs.ActionMenuBody")</p>
+    <DocsApi Name="ActionMenu" />
+
+    <h2 id="progressindicator">ProgressIndicator</h2>
+    <pre><code>&lt;ProgressIndicator Value="@@uploadPercent" Label="Uploading"
+                   CompletedText="Complete" CssClass="my-progress" /&gt;
+
+&lt;ProgressIndicator Mode="ProgressMode.Ring" Value="@@downloadPercent"
+                   IsRunning="@@downloading" Label="photo.zip"
+                   CompletedText="Downloaded" /&gt;
+
+&lt;ProgressIndicator Mode="ProgressMode.Ring" Items="@@tasks"
+                   OnTaskChanged="ChangeTask" ShowDone="true"
+                   Label="Tasks" /&gt;</code></pre>
+    <p>@T("Demo.Docs.ProgressBody")</p>
+    <DocsApi Name="ProgressIndicator" />
+
+    <h2 id="toast">Toast</h2>
+    <pre><code>&lt;!-- Add once to your layout --&gt;
+&lt;ToastHost /&gt;
+
+@@inject ToastService Toasts
+
+@@code {
+    private void Save() =&gt; Toasts.Show(new ToastOptions {
+        State = ToastState.Success,
+        Message = "Changes saved",
+        ActionText = "Undo",
+        OnAction = Undo
+    });
+}</code></pre>
+    <p>@T("Demo.Docs.ToastBody")</p>
+    <DocsApi Name="Toast" />
+
+    <h2 id="datatable">DataTable</h2>
+    <pre><code>&lt;DataTable TItem="Order" Items="@@orders" Columns="@@columns"
+           PageSizes="@@(new[] { 10, 50, 100 })"
+           RowKey="order =&gt; order.Id" /&gt;
+
+@@code {
+    private IReadOnlyList&lt;DataTableColumn&lt;Order&gt;&gt; columns = [
+        new() { Key = "customer", Header = "Customer",
+                Value = order =&gt; order.Customer, Sortable = true },
+        new() { Key = "total", Header = "Total",
+                Value = order =&gt; order.Total, Width = "8rem",
+                Format = "C", Culture = CultureInfo.GetCultureInfo("es-VE") }
+    ];
+}</code></pre>
+    <p>@T("Demo.Docs.TableBody")</p>
+    <DocsApi Name="DataTable" />
+</div>
 </div>
 
 @code {

@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageId>BlazorKinetix</PackageId>
-    <Version>0.1.0-preview.1</Version>
+    <Version>0.1.0</Version>
     <Authors>Ivan</Authors>
     <Description>Themeable form, action, feedback, date, and time components for Blazor Server and WebAssembly.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

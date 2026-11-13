@@ -1,0 +1,85 @@
+@namespace BlazorKinetix.Components
+
+@if (Mode == SwitchMode.Segmented)
+{
+    <div class="bk-switch bk-switch-segmented @CssClass" role="group" aria-label="@(AriaLabel ?? Label ?? "Options")"
+         style="--bk-segment-count:@Items.Count;--bk-segment-left:@SegmentLeft">
+        @foreach (var option in Items)
+        {
+            <button type="button" class="bk-switch-option @(SelectedKey == option.Key ? "is-selected" : null)"
+                    aria-pressed="@(SelectedKey == option.Key)" disabled="@(Disabled || !option.Enabled)"
+                    @onclick="() => SelectOption(option.Key)">
+                @option.Text
+            </button>
+        }
+    </div>
+}
+else
+{
+    <label class="bk-switch bk-switch-@Mode.ToString().ToLowerInvariant() @(Checked ? "is-on" : "") @(Disabled ? "is-disabled" : "") @CssClass">
+        <input type="checkbox" checked="@Checked" disabled="@Disabled" aria-label="@(AriaLabel ?? Label)" @onchange="ChangeChecked" />
+        @if (Mode == SwitchMode.Checkbox)
+        {
+            <span class="bk-switch-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 12 5 5L20 6" /></svg></span>
+        }
+        else
+        {
+            <span class="bk-switch-track" aria-hidden="true">
+                <span class="bk-switch-knob">
+                    @if (Mode == SwitchMode.IconMorph)
+                    {
+                        <svg class="bk-switch-morph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <path class="bk-switch-cross" d="M6 6 18 18M18 6 6 18" />
+                            <path class="bk-switch-check" d="m4 12 5 5L20 6" />
+                        </svg>
+                    }
+                </span>
+            </span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Label))
+        {
+            <span class="bk-switch-label">@Label</span>
+        }
+    </label>
+}
+
+@code {
+    /// <summary>Sets the switch appearance.</summary>
+    [Parameter] public SwitchMode Mode { get; set; } = SwitchMode.Liquid;
+    /// <summary>Displays a label beside the switch.</summary>
+    [Parameter] public string? Label { get; set; }
+    /// <summary>Labels the switch for assistive technology.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Sets the checked state of liquid, icon, and checkbox modes.</summary>
+    [Parameter] public bool Checked { get; set; }
+    /// <summary>Runs when the checked state changes.</summary>
+    [Parameter] public EventCallback<bool> CheckedChanged { get; set; }
+    /// <summary>Defines choices in segmented mode.</summary>
+    [Parameter] public IReadOnlyList<SwitchOption> Items { get; set; } = [];
+    /// <summary>Sets the selected segmented option.</summary>
+    [Parameter] public string? SelectedKey { get; set; }
+    /// <summary>Runs when the selected segmented option changes.</summary>
+    [Parameter] public EventCallback<string> SelectedKeyChanged { get; set; }
+    /// <summary>Disables interaction.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Adds CSS classes to the switch.</summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    private async Task ChangeChecked(ChangeEventArgs args) => await CheckedChanged.InvokeAsync(args.Value is true);
+    private async Task SelectOption(string key)
+    {
+        if (Disabled || SelectedKey == key || !Items.Any(item => item.Key == key && item.Enabled)) return;
+        await SelectedKeyChanged.InvokeAsync(key);
+    }
+    private string SegmentLeft
+    {
+        get
+        {
+            if (Items.Count == 0) return ".25rem";
+            var index = Math.Max(0, Items.ToList().FindIndex(item => item.Key == SelectedKey));
+            var percentage = 100d * index / Items.Count;
+            var rem = .25 - index * (.5 + (Items.Count - 1) * .2) / Items.Count + index * .2;
+            return $"calc({percentage.ToString(System.Globalization.CultureInfo.InvariantCulture)}% + {rem.ToString(System.Globalization.CultureInfo.InvariantCulture)}rem)";
+        }
+    }
+}

@@ -15,27 +15,43 @@
             <a href="@item.Href"><span>@T(item.CategoryKey)</span><strong>@item.Name</strong></a>
         }
     </div>
-    @if (!Filtered.Any()) { <p class="control-index-empty">@T("Demo.Index.Empty")</p> }
+    @if (!Filtered.Any())
+    {
+        <p class="control-index-empty">@T("Demo.Index.Empty")</p>
+    }
 </section>
 
 @code {
     private string query = "";
     private string? category;
-    private readonly string[] categories = ["Demo.Index.Fields", "Demo.Index.Actions", "Demo.Index.Feedback", "Demo.Index.Dates", "Demo.Index.Navigation"];
+    private readonly string[] categories = ["Demo.Index.Fields", "Demo.Index.Actions", "Demo.Index.Feedback", "Demo.Index.Dates", "Demo.Index.Navigation", "Demo.Index.Data"];
     private string T(string key) => Texts.Get(key);
     private void Search(ChangeEventArgs args) => query = args.Value?.ToString() ?? "";
     private readonly (string Name, string Href, string CategoryKey)[] items =
     [
         ("InputBox", "#inputs", "Demo.Index.Fields"),
+        ("ListBox", "#list-box", "Demo.Index.Fields"),
+        ("Autocomplete", "#autocomplete", "Demo.Index.Fields"),
+        ("FileUpload", "#file-upload", "Demo.Index.Fields"),
+        ("FormField", "#form-field", "Demo.Index.Fields"),
+        ("FormValidationSummary", "#form-field", "Demo.Index.Fields"),
         ("Button", "#buttons", "Demo.Index.Actions"),
+        ("Switch", "#switches", "Demo.Index.Actions"),
+        ("ActionMenu", "#action-menu", "Demo.Index.Navigation"),
+        ("ProgressIndicator", "#progress", "Demo.Index.Feedback"),
+        ("Toast", "#toast", "Demo.Index.Feedback"),
         ("Tooltip", "#tooltip", "Demo.Index.Feedback"),
         ("Modal", "#modal", "Demo.Index.Feedback"),
+        ("Dialog", "#dialog", "Demo.Index.Feedback"),
         ("HorizontalDatePicker", "#horizontal-date-picker", "Demo.Index.Dates"),
         ("DatePicker", "#date-picker", "Demo.Index.Dates"),
         ("DateRangePicker", "#date-range-picker", "Demo.Index.Dates"),
         ("TimePicker", "#time-picker", "Demo.Index.Dates"),
         ("DateTimePicker", "#date-time-picker", "Demo.Index.Dates")
         ,("NavMenu", "#navigation", "Demo.Index.Navigation")
+        ,("TabControl", "#tabs", "Demo.Index.Navigation")
+        ,("DataTable", "#tables", "Demo.Index.Data")
+        ,("Pagination", "#pagination", "Demo.Index.Data")
     ];
     private IEnumerable<(string Name, string Href, string CategoryKey)> Filtered => items.Where(item => (category is null || item.CategoryKey == category) && (string.IsNullOrWhiteSpace(query) || item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) || T(item.CategoryKey).Contains(query, StringComparison.OrdinalIgnoreCase)));
 }
