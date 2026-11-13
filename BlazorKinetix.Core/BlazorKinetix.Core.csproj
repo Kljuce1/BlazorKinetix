@@ -19,6 +19,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Copyright>Copyright © 2026 Ivan Kljuce</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

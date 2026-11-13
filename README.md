@@ -1,6 +1,18 @@
-# BlazorKinetix
+# <img src="BlazorKinetix.Demo/wwwroot/android-chrome-192x192.png" alt="" width="40"> BlazorKinetix
 
 Themeable controls for Blazor Server and WebAssembly, including inputs, file upload, actions, dialogs, navigation, tables, and date and time pickers.
+
+[![NuGet](https://img.shields.io/nuget/v/BlazorKinetix?label=NuGet&color=075b62)](https://www.nuget.org/packages/BlazorKinetix)
+[![MIT license](https://img.shields.io/badge/license-MIT-7553c2)](LICENSE)
+![.NET 10](https://img.shields.io/badge/.NET-10-512bd4)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme-preview-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="assets/readme-preview-light.png">
+  <img src="assets/readme-preview-light.png" alt="BlazorKinetix inputs, actions, date picker and data table" width="1280">
+</picture>
+
+**[Interactive demo](https://blazorkinetix.irsmartech.com/)** · [Component guide](https://blazorkinetix.irsmartech.com/docs) · [NuGet package](https://www.nuget.org/packages/BlazorKinetix)
 
 ## Suggest a control
 
@@ -230,14 +242,14 @@ builder.Services.AddBlazorKinetix(texts =>
 
 In WebAssembly, load the JSON from `wwwroot` before registering the service. The catalog uses `CurrentUICulture`; numeric parsing uses `CurrentCulture`. Component parameters take priority over catalog text. The fallback catalog is in English. The demo keeps its page copy and control messages in the same `kinetix-texts.json` file.
 
-## Package
+## Packaging from source
 
 ```shell
 dotnet pack BlazorKinetix.Core -c Release
 dotnet pack BlazorKinetix.Components -c Release
 ```
 
-Publish `BlazorKinetix.Core` 1.0.0 first, then `BlazorKinetix` 1.0.0. The component package declares Core as a dependency. Keep both package versions aligned for this release.
+The published packages are [BlazorKinetix.Core](https://www.nuget.org/packages/BlazorKinetix.Core) and [BlazorKinetix](https://www.nuget.org/packages/BlazorKinetix). The component package declares Core as a dependency; keep both versions aligned for future releases.
 
 ## Contributing
 
