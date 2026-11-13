@@ -16,7 +16,13 @@ The demo contains live examples, a searchable component index, a code view for e
 
 ## Install in an app
 
-After publication, install the `BlazorKinetix` NuGet package. During development, add a project reference to `BlazorKinetix.Components`.
+The library targets .NET 10 and works in Blazor Server and WebAssembly. Install the component package; NuGet also installs `BlazorKinetix.Core` as a dependency:
+
+```shell
+dotnet add package BlazorKinetix --version 1.0.0
+```
+
+To work from this repository instead, add a project reference to `BlazorKinetix.Components`.
 
 Register the text catalog in `Program.cs`:
 
@@ -231,7 +237,7 @@ dotnet pack BlazorKinetix.Core -c Release
 dotnet pack BlazorKinetix.Components -c Release
 ```
 
-The `BlazorKinetix` package depends on `BlazorKinetix.Core`. NuGet publication is planned; use project references until the packages are available.
+Publish `BlazorKinetix.Core` 1.0.0 first, then `BlazorKinetix` 1.0.0. The component package declares Core as a dependency. Keep both package versions aligned for this release.
 
 ## Contributing
 

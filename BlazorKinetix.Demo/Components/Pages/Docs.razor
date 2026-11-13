@@ -14,10 +14,12 @@
     <p>@T("Demo.Docs.IntroductionBody")</p>
     <h2 id="installation">@T("Demo.Docs.Installation")</h2>
     <p>@T("Demo.Docs.InstallBody")</p>
-    <pre><code>&lt;ProjectReference Include="..\BlazorKinetix.Components\BlazorKinetix.Components.csproj" /&gt;
+    <pre><code>dotnet add package BlazorKinetix --version 1.0.0
 
 @@using BlazorKinetix.Components
 @@using BlazorKinetix.Core</code></pre>
+    <p>@T("Demo.Docs.LocalReference")</p>
+    <pre><code>&lt;ProjectReference Include="..\BlazorKinetix.Components\BlazorKinetix.Components.csproj" /&gt;</code></pre>
     <h2>@T("Demo.Docs.Register")</h2>
     <pre><code>builder.Services.AddBlazorKinetix();</code></pre>
     <p>@T("Demo.Docs.RegisterBody")</p>

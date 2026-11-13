@@ -5,12 +5,25 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>BlazorKinetix.Core</PackageId>
-    <Version>0.1.0</Version>
-    <Authors>Ivan</Authors>
+    <Version>1.0.0</Version>
+    <Authors>Ivan Kljuce</Authors>
     <Description>Shared types and text catalog for BlazorKinetix components.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/Kljuce1/BlazorKinetix</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Kljuce1/BlazorKinetix</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PackageTags>blazor;components;ui;localization</PackageTags>
+    <PackageReleaseNotes>First stable release of the shared BlazorKinetix types and text catalog.</PackageReleaseNotes>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <None Include="..\BlazorKinetix.Demo\wwwroot\android-chrome-192x192.png" Pack="true" PackagePath="icon.png" />
+  </ItemGroup>
 
 </Project>

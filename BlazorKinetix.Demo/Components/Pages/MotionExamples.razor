@@ -35,9 +35,9 @@
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("progress-ring")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card motion-card">
-            <span class="eyebrow">CHECKBOX / 04</span><h3>@T("Demo.Motion.Checklist.Title")</h3><p>@T("Demo.Motion.Checklist.Description")</p>
+            <span class="eyebrow">CHECKBOX / 04</span><h3>@T("Demo.Motion.Checklist.Title")</h3><p class="mb-0 mb-lg-2">@T("Demo.Motion.Checklist.Description")</p>
             <div class="motion-progress-stage"><ProgressIndicator Mode="ProgressMode.Ring" Items="@tasks" OnTaskChanged="ChangeTask" ShowDone="true" Label="@T("Demo.Motion.Checklist.Working")" CompletedText="@T("Demo.Motion.Checklist.Done")" /></div>
-            <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("progress-checklist")'>@T("Demo.Code.View")</button>
+            <button class="view-code mt-5" type="button" @onclick='() => OnShowCode.InvokeAsync("progress-checklist")'>@T("Demo.Code.View")</button>
         </article>
     </div>
 </section>
