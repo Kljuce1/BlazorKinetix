@@ -4,7 +4,7 @@
     <div class="section-heading"><span class="eyebrow">@T("Demo.Pagination.Eyebrow")</span><div><h2>Pagination</h2><p>@T("Demo.Pagination.Description")</p></div></div>
     <div class="showcase-grid">
         <article class="card pagination-demo-card">
-            <span class="eyebrow">PAGINATION / 01</span><h3>@T("Demo.Pagination.Local.Title")</h3><p>@T("Demo.Pagination.Local.Description")</p>
+            <span class="eyebrow">01 · PAGINATION</span><h3>@T("Demo.Pagination.Local.Title")</h3><p>@T("Demo.Pagination.Local.Description")</p>
             <div class="pagination-demo-results" role="list">
                 @foreach (var item in localItems.Skip((localPage - 1) * localSize).Take(localSize))
                 {
@@ -20,7 +20,7 @@
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("pagination-local")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card pagination-demo-card">
-            <span class="eyebrow">PAGINATION / 02</span><h3>@T("Demo.Pagination.Remote.Title")</h3><p>@T("Demo.Pagination.Remote.Description")</p>
+            <span class="eyebrow">02 · PAGINATION</span><h3>@T("Demo.Pagination.Remote.Title")</h3><p>@T("Demo.Pagination.Remote.Description")</p>
             <div class="pagination-demo-results @(remoteLoading ? "is-loading" : null)" role="list" aria-busy="@remoteLoading">
                 @if (remoteLoading)
                 {

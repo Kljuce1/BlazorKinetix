@@ -7,7 +7,7 @@
     <div class="section-heading"><span class="eyebrow">@T("Demo.Form.Eyebrow")</span><div><h2>FormField · FormValidationSummary</h2><p>@T("Demo.Form.Description")</p></div></div>
     <div class="showcase-grid">
         <article class="card form-demo-card">
-            <span class="eyebrow">FORMFIELD / 01</span><h3>@T("Demo.Form.Fields.Title")</h3><p>@T("Demo.Form.Fields.Description")</p>
+            <span class="eyebrow">01 · FORMFIELD</span><h3>@T("Demo.Form.Fields.Title")</h3><p>@T("Demo.Form.Fields.Description")</p>
             <EditForm EditContext="@editContext" OnValidSubmit="ValidSubmit">
                 <FormValidationSummary ShowWhenValid="@submitted" CssClass="mb-2" />
                 <FormField TValue="string" Label="@T("Demo.Form.Name")" Required="true"
@@ -27,7 +27,7 @@
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("form-field")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card form-demo-card">
-            <span class="eyebrow">FORMFIELD / 02</span><h3>@T("Demo.Form.Independent.Title")</h3><p>@T("Demo.Form.Independent.Description")</p>
+            <span class="eyebrow">02 · FORMFIELD</span><h3>@T("Demo.Form.Independent.Title")</h3><p>@T("Demo.Form.Independent.Description")</p>
             <InputBox TValue="string" Title="@T("Demo.Form.Code")" Required="true" MinLength="4"
                       LiveValidation="true" @bind-Value="code" />
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("form-independent")'>@T("Demo.Code.View")</button>

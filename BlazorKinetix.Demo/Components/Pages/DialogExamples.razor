@@ -4,22 +4,22 @@
     <div class="section-heading"><span class="eyebrow">@T("Demo.Dialog.Eyebrow")</span><div><h2>Dialog</h2><p>@T("Demo.Dialog.Description")</p></div></div>
     <div class="showcase-grid">
         <article class="card dialog-demo-card">
-            <span class="eyebrow">DIALOG / 01</span><h3>@T("Demo.Dialog.Info.Title")</h3><p>@T("Demo.Dialog.Info.Description")</p>
+            <span class="eyebrow">01 · DIALOG</span><h3>@T("Demo.Dialog.Info.Title")</h3><p>@T("Demo.Dialog.Info.Description")</p>
             <Button Text="@T("Demo.Dialog.Info.Open")" OnAction="() => infoOpen = true" />
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("dialog-info")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card dialog-demo-card">
-            <span class="eyebrow">DIALOG / 02</span><h3>@T("Demo.Dialog.Danger.Title")</h3><p>@T("Demo.Dialog.Danger.Description")</p>
+            <span class="eyebrow">02 · DIALOG</span><h3>@T("Demo.Dialog.Danger.Title")</h3><p>@T("Demo.Dialog.Danger.Description")</p>
             <Button Text="@T("Demo.Dialog.Danger.Open")" Color="ColorRole.Danger" OnAction="() => dangerOpen = true" />
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("dialog-danger")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card dialog-demo-card">
-            <span class="eyebrow">DIALOG / 03</span><h3>@T("Demo.Dialog.Custom.Title")</h3><p>@T("Demo.Dialog.Custom.Description")</p>
+            <span class="eyebrow">03 · DIALOG</span><h3>@T("Demo.Dialog.Custom.Title")</h3><p>@T("Demo.Dialog.Custom.Description")</p>
             <Button Text="@T("Demo.Dialog.Custom.Open")" OnAction="() => customOpen = true" />
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("dialog-custom")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card dialog-demo-card">
-            <span class="eyebrow">DIALOG / 04</span><h3>@T("Demo.Dialog.States.Title")</h3><p>@T("Demo.Dialog.States.Description")</p>
+            <span class="eyebrow">04 · DIALOG</span><h3>@T("Demo.Dialog.States.Title")</h3><p>@T("Demo.Dialog.States.Description")</p>
             <div class="dialog-demo-actions">
                 <button type="button" @onclick="() => OpenState(DialogMode.Question, DialogAnimation.Grow)">@T("Demo.Dialog.States.Question")</button>
                 <button type="button" @onclick="() => OpenState(DialogMode.Warning, DialogAnimation.Unfold)">@T("Demo.Dialog.States.Warning")</button>

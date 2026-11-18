@@ -40,14 +40,19 @@ main { max-width:1250px; margin:auto; padding:0 2rem 5rem; }
 .section-heading h2 { margin:0; font-size:clamp(2.2rem,4vw,3.5rem); letter-spacing:-.06em; }
 .section-heading p { margin:.4rem 0 0; color:var(--page-muted); }
 .showcase-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; margin-top:1.4rem; }
-.card { display:flex; flex-direction:column; min-width:0; min-height:285px; padding:1.5rem; border:1px solid var(--page-border); border-radius:1.1rem; background:var(--page-card); box-shadow:0 3px 16px #0001; }
-.card h3 { margin:1rem 0 .3rem; font-size:1.22rem; letter-spacing:-.025em; }
-.card p { min-height:3.1rem; margin:.3rem 0 1.4rem; color:var(--page-muted); font-size:.88rem; line-height:1.55; }
+.card { display:flex; flex-direction:column; min-width:0; min-height:285px; padding:1.5rem; border:1px solid var(--page-border); border-radius:1.1rem; background:var(--page-card); color:var(--page-text); box-shadow:0 3px 16px #0001; }
+.card h3 { margin:.7rem 0 .3rem; font-size:1.3rem; letter-spacing:-.025em; }
+.card p { min-height:3.1rem; margin:.3rem 0 1rem; color:var(--page-muted); font-size:.88rem; line-height:1.55; }
+.card-status { display:block; margin-top:.75rem; color:var(--bk-primary); font-size:.82rem; font-weight:600; }
+.card-status:empty { display:none; }
 .view-code { align-self:flex-start; margin-top:auto; padding:.9rem 0 0; border:0; background:transparent; color:var(--bk-primary); font-size:.82rem; font-weight:750; cursor:pointer; }
 .view-code:hover { text-decoration:underline; }
 .view-code:focus-visible { outline:2px solid var(--bk-primary); outline-offset:3px; }
 .button-row { display:flex; flex-wrap:wrap; gap:.6rem; }
+.button-demo-item { display:flex; flex-direction:column; align-items:flex-start; min-width:0; }
+.button-demo-item .card-status { max-width:12rem; line-height:1.4; }
 .demo-status { min-height:1.3rem; color:var(--bk-primary); font-size:.9rem; }
+.visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
 .tooltip-card { max-width:430px; margin-top:1.4rem; min-height:0; }
 .tooltip-card p { min-height:0; margin:1rem 0 0; }
 .hint-button { padding:.8rem 1rem; border:1px solid var(--page-border); border-radius:.65rem; background:var(--page-card); color:var(--bk-primary); cursor:pointer; }

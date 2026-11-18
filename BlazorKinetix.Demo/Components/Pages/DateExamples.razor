@@ -4,49 +4,49 @@
     <div class="section-heading"><span class="eyebrow">@T("Demo.Dates.Eyebrow")</span><div><h2>@T("Demo.Dates.Title")</h2><p>@T("Demo.Dates.Description")</p></div></div>
     <div class="showcase-grid date-showcase">
         <article class="card date-card" id="horizontal-date-picker">
-            <span class="eyebrow">HORIZONTALDATEPICKER / 01</span><h3>@T("Demo.Dates.Flights.Title")</h3><p>@T("Demo.Dates.Flights.Description")</p>
+            <span class="eyebrow">01 · HORIZONTALDATEPICKER</span><h3>@T("Demo.Dates.Flights.Title")</h3><p>@T("Demo.Dates.Flights.Description")</p>
             <HorizontalDatePicker Label="@T("Demo.Dates.Flights.Label")" StartDate="@today" EndDate="@today.AddDays(13)" MinDate="@today" DisabledDates="@flightUnavailable" Availability="@flightPrices" @bind-Value="flightDate" />
             <small class="date-result">@DateResult(flightDate)</small>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("horizontal-flight")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card date-card">
-            <span class="eyebrow">HORIZONTALDATEPICKER / 02</span><h3>@T("Demo.Dates.Classes.Title")</h3><p>@T("Demo.Dates.Classes.Description")</p>
+            <span class="eyebrow">02 · HORIZONTALDATEPICKER</span><h3>@T("Demo.Dates.Classes.Title")</h3><p>@T("Demo.Dates.Classes.Description")</p>
             <HorizontalDatePicker Label="@T("Demo.Dates.Classes.Label")" StartDate="@today" EndDate="@today.AddDays(10)" MinDate="@today" DisabledDates="@classUnavailable" Availability="@classPlaces" @bind-Value="classDate" CssClass="class-date-picker" />
             <small class="date-result">@DateResult(classDate)</small>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("horizontal-class")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card date-card" id="date-picker">
-            <span class="eyebrow">DATEPICKER / 01</span><h3>@T("Demo.Dates.Travel.Title")</h3><p>@T("Demo.Dates.Travel.Description")</p>
+            <span class="eyebrow">03 · DATEPICKER</span><h3>@T("Demo.Dates.Travel.Title")</h3><p>@T("Demo.Dates.Travel.Description")</p>
             <DatePicker Label="@T("Demo.Dates.Travel.Label")" MinDate="@today" MaxDate="@today.AddMonths(12)" DisabledDates="@flightUnavailable" Availability="@flightPrices" @bind-Value="travelDate" />
             <small class="date-result">@DateResult(travelDate)</small>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("date-travel")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card date-card">
-            <span class="eyebrow">DATEPICKER / 02</span><h3>@T("Demo.Dates.Appointment.Title")</h3><p>@T("Demo.Dates.Appointment.Description")</p>
+            <span class="eyebrow">04 · DATEPICKER</span><h3>@T("Demo.Dates.Appointment.Title")</h3><p>@T("Demo.Dates.Appointment.Description")</p>
             <DatePicker Label="@T("Demo.Dates.Appointment.Label")" MinDate="@today" MaxDate="@today.AddMonths(3)" DisabledDates="@classUnavailable" @bind-Value="appointmentDate" CssClass="appointment-picker" />
             <small class="date-result">@DateResult(appointmentDate)</small>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("date-appointment")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card date-card" id="date-range-picker">
-            <span class="eyebrow">DATERANGEPICKER</span><h3>@T("Demo.Dates.Stay.Title")</h3><p>@T("Demo.Dates.Stay.Description")</p>
+            <span class="eyebrow">05 · DATERANGEPICKER</span><h3>@T("Demo.Dates.Stay.Title")</h3><p>@T("Demo.Dates.Stay.Description")</p>
             <DateRangePicker Label="@T("Demo.Dates.Stay.Label")" MinDate="@today" MaxDate="@today.AddMonths(6)" DisabledDates="@flightUnavailable" @bind-Value="stayRange" RangeChanged="OnRangeChanged" />
             <small class="date-result">@T(rangeStatusKey)</small>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("date-range")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card date-card" id="time-picker">
-            <span class="eyebrow">TIMEPICKER</span><h3>@T("Demo.Dates.Time.Title")</h3><p>@T("Demo.Dates.Time.Description")</p>
+            <span class="eyebrow">06 · TIMEPICKER</span><h3>@T("Demo.Dates.Time.Title")</h3><p>@T("Demo.Dates.Time.Description")</p>
             <TimePicker Label="@T("Demo.Dates.Time.Label")" MinTime="@(new TimeOnly(9, 0))" MaxTime="@(new TimeOnly(17, 0))" StepMinutes="30" DisabledTimes="@busyTimes" @bind-Value="meetingTime" />
             <small class="date-result">@(meetingTime?.ToString("t") ?? T("Demo.Dates.None"))</small>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("time")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card date-card">
-            <span class="eyebrow">TIMEPICKER / ITEMS</span><h3>@T("Demo.Dates.List.Title")</h3><p>@T("Demo.Dates.List.Description")</p>
+            <span class="eyebrow">07 · TIMEPICKER / ITEMS</span><h3>@T("Demo.Dates.List.Title")</h3><p>@T("Demo.Dates.List.Description")</p>
             <TimePicker Label="@T("Demo.Dates.List.Label")" Items="@meetingSlots" @bind-Value="meetingListTime" />
             <small class="date-result">@(meetingListTime?.ToString("t") ?? T("Demo.Dates.None"))</small>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("time-list")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card date-card" id="date-time-picker">
-            <span class="eyebrow">DATETIMEPICKER</span><h3>@T("Demo.Dates.Session.Title")</h3><p>@T("Demo.Dates.Session.Description")</p>
+            <span class="eyebrow">08 · DATETIMEPICKER</span><h3>@T("Demo.Dates.Session.Title")</h3><p>@T("Demo.Dates.Session.Description")</p>
             <DateTimePicker Label="@T("Demo.Dates.Session.Label")" MinDate="@today" MaxDate="@today.AddMonths(2)" DisabledDates="@classUnavailable" ItemsForDate="SlotsForDate" @bind-Value="sessionDateTime" />
             <small class="date-result">@(sessionDateTime?.ToString("g") ?? T("Demo.Dates.None"))</small>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("date-time")'>@T("Demo.Code.View")</button>

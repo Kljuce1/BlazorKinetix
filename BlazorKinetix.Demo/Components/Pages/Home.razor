@@ -23,9 +23,9 @@
     </div>
     <div class="hero-panel">
         <span class="eyebrow">@T("Demo.Hero.Preview")</span>
-        <InputBox TValue="string" Title="@T("Demo.Hero.Email")" Email="true" LabelMode="InputBoxLabelMode.Floating" Appearance="InputBoxAppearance.Gradient" LiveValidation="true" @bind-Value="email" />
-        <Button Text="@T("Demo.Hero.Started")" OnAction="Confirm" />
-        <small>@Status</small>
+        <InputBox @ref="heroEmailInput" TValue="string" Title="@T("Demo.Hero.Email")" Email="true" Required="true" LabelMode="InputBoxLabelMode.Floating" Appearance="InputBoxAppearance.Gradient" LiveValidation="true" @bind-Value="heroEmail" />
+        <Button Mode="ButtonMode.ActionFeedback" Text="@T("Demo.Hero.Validate")" FeedbackText="@heroFeedbackText" OnAction="ValidateHeroEmail" />
+        <small class="visually-hidden" role="status">@T(heroStatusKey)</small>
     </div>
 </section>
 
@@ -49,6 +49,7 @@
             <InputBox TValue="string" Title="@T("Demo.Input.Gradient.Label")" Appearance="InputBoxAppearance.Gradient" @bind-Value="promo">
                 <Action><Button Mode="ButtonMode.ActionFeedback" Text="@T("Demo.Input.Gradient.Apply")" FeedbackText="@T("Demo.Input.Gradient.Applied")" OnAction="ApplyPromo" /></Action>
             </InputBox>
+            <small class="card-status" role="status">@T(promoStatusKey)</small>
             <button class="view-code" type="button" @onclick='() => ShowCode("gradient")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card">
@@ -79,29 +80,40 @@
     <div class="showcase-grid">
         <article class="card">
             <span class="eyebrow">@T("Demo.Button.Default.Tag")</span><h3>@T("Demo.Button.Default.Title")</h3><p>@T("Demo.Button.Default.Description")</p>
-            <div class="button-row"><Button Text="@T("Demo.Button.Default.Save")" OnAction="SaveAsync" ProcessingText="@T("Demo.Button.Default.Saving")" /><Button Text="@T("Demo.Button.Default.Learn")" Variant="ButtonVariant.Outline" OnAction="Confirm" /></div>
+            <div class="button-row">
+                <div class="button-demo-item">
+                    <Button Text="@T("Demo.Button.Default.Save")" OnAction="SaveAsync" ProcessingText="@T("Demo.Button.Default.Saving")" />
+                    <small class="card-status" role="status">@T(saveStatusKey)</small>
+                </div>
+                <div class="button-demo-item">
+                    <Button Text="@T("Demo.Button.Default.Learn")" Variant="ButtonVariant.Outline" OnAction="TryOutlineAction" />
+                    <small class="card-status" role="status">@T(outlineStatusKey)</small>
+                </div>
+            </div>
             <button class="view-code" type="button" @onclick='() => ShowCode("default-button")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card">
             <span class="eyebrow">@T("Demo.Button.Hold.Tag")</span><h3>@T("Demo.Button.Hold.Title")</h3><p>@T("Demo.Button.Hold.Description")</p>
-            <Button Mode="ButtonMode.HoldToConfirm" Color="ColorRole.Danger" Text="@T("Demo.Button.Hold.Delete")" SuccessText="@T("Demo.Button.Hold.Deleted")" OnAction="Confirm">
+            <Button Mode="ButtonMode.HoldToConfirm" Color="ColorRole.Danger" Text="@T("Demo.Button.Hold.Delete")" SuccessText="@T("Demo.Button.Hold.Deleted")" OnAction="ConfirmHold">
                 <Icon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m5 4v6m4-6v6" /></svg></Icon>
                 <SuccessIcon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg></SuccessIcon>
             </Button>
+            <small class="card-status" role="status">@T(holdStatusKey)</small>
             <button class="view-code" type="button" @onclick='() => ShowCode("hold")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card">
             <span class="eyebrow">@T("Demo.Button.Feedback.Tag")</span><h3>@T("Demo.Button.Feedback.Title")</h3><p>@T("Demo.Button.Feedback.Description")</p>
-            <Button Mode="ButtonMode.ActionFeedback" Text="@T("Demo.Button.Feedback.Send")" FeedbackText="@T("Demo.Button.Feedback.Sent")" OnAction="SaveAsync" />
+            <Button Mode="ButtonMode.ActionFeedback" Text="@T("Demo.Button.Feedback.Send")" FeedbackText="@T("Demo.Button.Feedback.Sent")" OnAction="SendInvitationAsync" />
+            <small class="card-status" role="status">@T(feedbackStatusKey)</small>
             <button class="view-code" type="button" @onclick='() => ShowCode("feedback")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card">
             <span class="eyebrow">@T("Demo.Button.Slide.Tag")</span><h3>@T("Demo.Button.Slide.Title")</h3><p>@T("Demo.Button.Slide.Description")</p>
-            <Button Mode="ButtonMode.SlideToConfirm" Text="@T("Demo.Button.Slide.Approve")" SuccessText="@T("Demo.Button.Slide.Confirmed")" OnAction="Confirm" />
+            <Button Mode="ButtonMode.SlideToConfirm" Text="@T("Demo.Button.Slide.Approve")" SuccessText="@T("Demo.Button.Slide.Confirmed")" OnAction="ConfirmSlide" />
+            <small class="card-status" role="status">@T(slideStatusKey)</small>
             <button class="view-code" type="button" @onclick='() => ShowCode("slide")'>@T("Demo.Code.View")</button>
         </article>
     </div>
-    <p class="demo-status" role="status">@Status</p>
 </section>
 
 <DateExamples OnShowCode="ShowCode" />
@@ -143,11 +155,18 @@
 </Modal>
 
 @code {
-    private string? name, email, promo, project, password, note;
+    private string? name, email, heroEmail, promo, project, password, note;
+    private InputBox<string>? heroEmailInput;
+    private string? heroFeedbackText;
     private bool codeOpen, detailsOpen;
     private string selectedKey = "normal", selectedCode = "";
-    private string statusKey = "Demo.Status.Initial";
-    private string Status => Texts.Get(statusKey, new Dictionary<string, string> { ["promo"] = promo ?? "" });
+    private string heroStatusKey = "Demo.Status.Empty";
+    private string promoStatusKey = "Demo.Status.Empty";
+    private string saveStatusKey = "Demo.Status.Empty";
+    private string outlineStatusKey = "Demo.Status.Empty";
+    private string holdStatusKey = "Demo.Status.Empty";
+    private string feedbackStatusKey = "Demo.Status.Empty";
+    private string slideStatusKey = "Demo.Status.Empty";
     private string T(string key) => Texts.Get(key);
     private string BannerUrl => new Uri(new Uri(Navigation.BaseUri), "images/Banner_1200x630.jpg").AbsoluteUri;
 
@@ -158,7 +177,18 @@
         codeOpen = true;
     }
 
-    private void Confirm() => statusKey = "Demo.Status.Completed";
-    private void ApplyPromo() => statusKey = "Demo.Status.Applied";
-    private async Task SaveAsync() { await Task.Delay(1200); statusKey = "Demo.Status.Saved"; }
+    private void ValidateHeroEmail()
+    {
+        heroFeedbackText = null;
+        heroStatusKey = "Demo.Status.Empty";
+        if (heroEmailInput?.ValidateField() != true) return;
+        heroFeedbackText = T("Demo.Hero.ValidEmail");
+        heroStatusKey = "Demo.Hero.ValidEmail";
+    }
+    private void ApplyPromo() => promoStatusKey = "Demo.Status.PromoTried";
+    private void TryOutlineAction() => outlineStatusKey = "Demo.Status.OutlineTried";
+    private void ConfirmHold() => holdStatusKey = "Demo.Status.HoldTried";
+    private void ConfirmSlide() => slideStatusKey = "Demo.Status.SlideTried";
+    private async Task SaveAsync() { await Task.Delay(1200); saveStatusKey = "Demo.Status.SaveTried"; }
+    private async Task SendInvitationAsync() { await Task.Delay(1200); feedbackStatusKey = "Demo.Status.InvitationTried"; }
 }

@@ -5,13 +5,13 @@
     <div class="section-heading"><span class="eyebrow">@T("Demo.FileUpload.Eyebrow")</span><div><h2>FileUpload</h2><p>@T("Demo.FileUpload.Description")</p></div></div>
     <div class="showcase-grid">
         <article class="card file-upload-demo-card">
-            <span class="eyebrow">FILEUPLOAD / 01</span><h3>@T("Demo.FileUpload.Preview.Title")</h3><p>@T("Demo.FileUpload.Preview.Description")</p>
+            <span class="eyebrow">01 · FILEUPLOAD</span><h3>@T("Demo.FileUpload.Preview.Title")</h3><p>@T("Demo.FileUpload.Preview.Description")</p>
             <FileUpload Label="@T("Demo.FileUpload.Preview.Label")" Accept="image/png,image/jpeg"
                         MaxFiles="1" MaxFileSize="1048576" MaxPreviewBytes="768144" ShowPreviews="true" />
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("file-upload-preview")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card file-upload-demo-card">
-            <span class="eyebrow">FILEUPLOAD / 02</span><h3>@T("Demo.FileUpload.Progress.Title")</h3><p>@T("Demo.FileUpload.Progress.Description")</p>
+            <span class="eyebrow">02 · FILEUPLOAD</span><h3>@T("Demo.FileUpload.Progress.Title")</h3><p>@T("Demo.FileUpload.Progress.Description")</p>
             <FileUpload Label="@T("Demo.FileUpload.Progress.Label")" Accept=".txt"
                         Multiple="true" MaxFiles="2" MaxFileSize="262144" AutoUpload="false"
                         UploadAsync="SimulateUploadAsync" />

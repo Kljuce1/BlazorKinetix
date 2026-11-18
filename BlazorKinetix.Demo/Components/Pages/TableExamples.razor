@@ -4,24 +4,24 @@
     <div class="section-heading"><span class="eyebrow">@T("Demo.Tables.Eyebrow")</span><div><h2>DataTable</h2><p>@T("Demo.Tables.Description")</p></div></div>
     <div class="showcase-grid table-showcase">
         <article class="card table-demo-card table-demo-wide">
-            <span class="eyebrow">DATATABLE / 01</span><h3>@T("Demo.Tables.Detail.Title")</h3><p>@T("Demo.Tables.Detail.Description")</p>
+            <span class="eyebrow">01 · DATATABLE</span><h3>@T("Demo.Tables.Detail.Title")</h3><p>@T("Demo.Tables.Detail.Description")</p>
             <div class="table-demo-frame">
                 <DataTable TItem="ClassSession" Items="@sessions" Columns="@SessionColumns" Mode="DataTableLoadMode.Full" RowKey="session => session.Id" DetailTemplate="@SessionDetail" HasDetails="session => session.Attendees.Count > 0" Caption="@T("Demo.Tables.Detail.Caption")" Height="24rem" MobileBreakpoint="640" />
             </div>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("table-detail")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card table-demo-card">
-            <span class="eyebrow">DATATABLE / 02</span><h3>@T("Demo.Tables.Paged.Title")</h3><p>@T("Demo.Tables.Paged.Description")</p>
+            <span class="eyebrow">02 · DATATABLE</span><h3>@T("Demo.Tables.Paged.Title")</h3><p>@T("Demo.Tables.Paged.Description")</p>
             <div class="table-demo-frame"><DataTable TItem="OrderRow" Items="@orders" Columns="@OrderColumns" PageSizes="@(new[] { 5, 10, 20 })" RowKey="row => row.Id" Caption="@T("Demo.Tables.Paged.Caption")" Height="20rem" MobileBreakpoint="520" /></div>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("table-paged")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card table-demo-card">
-            <span class="eyebrow">DATATABLE / 03</span><h3>@T("Demo.Tables.Infinite.Title")</h3><p>@T("Demo.Tables.Infinite.Description")</p>
+            <span class="eyebrow">03 · DATATABLE</span><h3>@T("Demo.Tables.Infinite.Title")</h3><p>@T("Demo.Tables.Infinite.Description")</p>
             <div class="table-demo-frame"><DataTable TItem="ActivityRow" ItemsProvider="LoadActivity" Columns="@ActivityColumns" Mode="DataTableLoadMode.Infinite" PageSizes="@(new[] { 8 })" RowKey="row => row.Id" ShowHeader="false" Caption="@T("Demo.Tables.Infinite.Caption")" Height="20rem" MobileBreakpoint="520" /></div>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("table-infinite")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card table-demo-card table-demo-wide">
-            <span class="eyebrow">DATATABLE / 04</span><h3>@T("Demo.Tables.States.Title")</h3><p>@T("Demo.Tables.States.Description")</p>
+            <span class="eyebrow">04 · DATATABLE</span><h3>@T("Demo.Tables.States.Title")</h3><p>@T("Demo.Tables.States.Description")</p>
             <div class="table-demo-buttons"><button type="button" @onclick="() => showSkeleton = !showSkeleton">@(showSkeleton ? T("Demo.Tables.States.ShowEmpty") : T("Demo.Tables.States.ShowLoading"))</button></div>
             <div class="table-demo-frame table-demo-state">
                 <DataTable TItem="OrderRow" Items="@emptyOrders" Columns="@OrderColumns" Loading="@showSkeleton" SkeletonRows="3" Caption="@T("Demo.Tables.States.Caption")">

@@ -4,21 +4,21 @@
     <div class="section-heading"><span class="eyebrow">@T("Demo.ListBox.Eyebrow")</span><div><h2>ListBox</h2><p>@T("Demo.ListBox.Description")</p></div></div>
     <div class="showcase-grid">
         <article class="card listbox-demo-card">
-            <span class="eyebrow">LISTBOX / 01</span><h3>@T("Demo.ListBox.First.Title")</h3><p>@T("Demo.ListBox.First.Description")</p>
+            <span class="eyebrow">01 · LISTBOX</span><h3>@T("Demo.ListBox.First.Title")</h3><p>@T("Demo.ListBox.First.Description")</p>
             <ListBox TValue="string" Items="@CategoryItems" Label="@T("Demo.ListBox.Category")"
                      InitialSelection="ListBoxInitialSelection.First" @bind-Value="category" />
             <p class="listbox-demo-selection">@T("Demo.ListBox.Selected"): @SelectedText(CategoryItems, category)</p>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("listbox-first")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card listbox-demo-card">
-            <span class="eyebrow">LISTBOX / 02</span><h3>@T("Demo.ListBox.Search.Title")</h3><p>@T("Demo.ListBox.Search.Description")</p>
+            <span class="eyebrow">02 · LISTBOX</span><h3>@T("Demo.ListBox.Search.Title")</h3><p>@T("Demo.ListBox.Search.Description")</p>
             <ListBox TValue="string" Items="@ProjectItems" Label="@T("Demo.ListBox.Project")" Search="true"
                      Clearable="true" CssClass="demo-violet-listbox" @bind-Value="project" />
             <p class="listbox-demo-selection">@T("Demo.ListBox.Selected"): @SelectedText(ProjectItems, project)</p>
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("listbox-search")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card listbox-demo-card">
-            <span class="eyebrow">LISTBOX / 03</span><h3>@T("Demo.ListBox.Template.Title")</h3><p>@T("Demo.ListBox.Template.Description")</p>
+            <span class="eyebrow">03 · LISTBOX</span><h3>@T("Demo.ListBox.Template.Title")</h3><p>@T("Demo.ListBox.Template.Description")</p>
             <ListBox TValue="string" Items="@PersonItems" Label="@T("Demo.ListBox.Person")" Search="true" Clearable="true" @bind-Value="person">
                 <ItemTemplate Context="entry"><span class="listbox-person"><img src="@entry.ImageSrc" alt="" /><span><strong>@entry.Text</strong><small>@entry.Description</small></span></span></ItemTemplate>
                 <EmptyTemplate><div class="listbox-demo-empty"><span aria-hidden="true">◎</span><strong>@T("Demo.ListBox.CustomEmpty")</strong></div></EmptyTemplate>

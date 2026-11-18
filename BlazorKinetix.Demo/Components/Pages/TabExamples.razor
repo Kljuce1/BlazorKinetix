@@ -4,7 +4,7 @@
     <div class="section-heading"><span class="eyebrow">@T("Demo.Tabs.Eyebrow")</span><div><h2>TabControl</h2><p>@T("Demo.Tabs.Description")</p></div></div>
     <div class="showcase-grid">
         <article class="card tab-demo-card">
-            <span class="eyebrow">TABCONTROL / 01</span><h3>@T("Demo.Tabs.Basic.Title")</h3><p>@T("Demo.Tabs.Basic.Description")</p>
+            <span class="eyebrow">01 · TABCONTROL</span><h3>@T("Demo.Tabs.Basic.Title")</h3><p>@T("Demo.Tabs.Basic.Description")</p>
             <TabControl Items="@BasicItems" AriaLabel="@T("Demo.Tabs.Basic.Title")" KeepPanelsMounted="true" @bind-ActiveKey="basicKey">
                 <Content Context="key">
                     @if (key == "overview")
@@ -27,7 +27,7 @@
             <button class="view-code" type="button" @onclick='() => OnShowCode.InvokeAsync("tabs-basic")'>@T("Demo.Code.View")</button>
         </article>
         <article class="card tab-demo-card">
-            <span class="eyebrow">TABCONTROL / 02</span><h3>@T("Demo.Tabs.Custom.Title")</h3><p>@T("Demo.Tabs.Custom.Description")</p>
+            <span class="eyebrow">02 · TABCONTROL</span><h3>@T("Demo.Tabs.Custom.Title")</h3><p>@T("Demo.Tabs.Custom.Description")</p>
             <TabControl Items="@CustomItems" AriaLabel="@T("Demo.Tabs.Custom.Title")" CssClass="demo-violet-tabs" @bind-ActiveKey="customKey">
                 <HeaderActions><button class="tab-demo-action" type="button" @onclick="AddItem">@T("Demo.Tabs.Custom.Action")</button></HeaderActions>
                 <Content Context="key">
