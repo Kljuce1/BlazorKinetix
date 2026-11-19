@@ -31,7 +31,7 @@ The demo contains live examples, a searchable component index, a code view for e
 The library targets .NET 10 and works in Blazor Server and WebAssembly. Install the component package; NuGet also installs `BlazorKinetix.Core` as a dependency:
 
 ```shell
-dotnet add package BlazorKinetix --version 1.0.0
+dotnet add package BlazorKinetix --version 1.0.2
 ```
 
 To work from this repository instead, add a project reference to `BlazorKinetix.Components`.
