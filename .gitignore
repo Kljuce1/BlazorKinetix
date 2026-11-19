@@ -8,3 +8,4 @@
 *.snupkg
 BlazorKinetix.txt
 .table-chrome-profile/
+/BlazorKinetix.Demo/Properties/PublishProfiles/FolderProfile.pubxml
