@@ -5,17 +5,17 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageId>BlazorKinetix</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.2</Version>
     <Authors>Ivan Kljuce</Authors>
     <Description>Themeable form, action, feedback, date, and time components for Blazor Server and WebAssembly.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageProjectUrl>https://blazorkinetix.irsmartech.com</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Kljuce1/BlazorKinetix</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>blazor;components;ui;razor;webassembly</PackageTags>
-    <PackageReleaseNotes>First stable release of the BlazorKinetix component library.</PackageReleaseNotes>
+    <PackageReleaseNotes>NuGet package readme now renders correctly. InputBox integer and decimal fields reject nonnumeric input; decimal fields use the active culture's separator and convert a numeric keypad period when needed.</PackageReleaseNotes>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -36,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\README.md" Pack="true" PackagePath="/" />
+    <None Update="NUGET_README.md" Pack="true" PackagePath="/" />
     <None Include="..\BlazorKinetix.Demo\wwwroot\android-chrome-192x192.png" Pack="true" PackagePath="icon.png" />
   </ItemGroup>
 

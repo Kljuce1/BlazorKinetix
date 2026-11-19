@@ -59,7 +59,7 @@ The host stylesheet imports the library's isolated styles automatically during t
           LiveValidation="true" @bind-Value="email" />
 ```
 
-`InputBoxKind` supports `Text`, `Integer`, `Decimal`, and `Password`. Numeric values use the current culture. `Value`, `ValueChanged`, and `ValueExpression` support `@bind-Value` and `EditForm`. `Action` accepts a `RenderFragment`, including a `Button`. `ValidateField()` checks the current value when called through `@ref`.
+`InputBoxKind` supports `Text`, `Integer`, `Decimal`, and `Password`. Numeric fields reject letters and grouping separators while typing or pasting. Decimal fields accept only one decimal separator from `CultureInfo.CurrentCulture` (for example, a comma in Spanish and a period in English); a period entered with the numeric keypad is converted to the culture's separator. A leading sign is allowed. `Value`, `ValueChanged`, and `ValueExpression` support `@bind-Value` and `EditForm`. `Action` accepts a `RenderFragment`, including a `Button`. `ValidateField()` checks the current value when called through `@ref`.
 
 Email fields use `inputmode="email"` and the component's validation message. Set `NativeValidation="true"` to use the browser's email and required-field messages instead.
 

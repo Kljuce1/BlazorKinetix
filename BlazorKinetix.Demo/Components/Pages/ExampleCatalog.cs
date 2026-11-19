@@ -191,6 +191,14 @@ internal static class ExampleCatalog
                           MaxLength="36" ShowCharacterCount="true"
                           @bind-Value="note" />
                 """),
+            ["integer"] = ("Integer input", """
+                <InputBox TValue="int?" Kind="InputBoxKind.Integer"
+                          Title="Quantity" @bind-Value="integerValue" />
+                """),
+            ["decimal"] = ("Decimal input", """
+                <InputBox TValue="decimal?" Kind="InputBoxKind.Decimal"
+                          Title="Amount" @bind-Value="decimalValue" />
+                """),
             ["default-button"] = ("Default button", """
                 <Button Text="Save changes" OnAction="SaveAsync"
                         ProcessingText="Saving…" />

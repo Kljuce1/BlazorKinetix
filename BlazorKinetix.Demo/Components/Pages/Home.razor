@@ -5,14 +5,21 @@
 
 <PageTitle>@T("Demo.Home.PageTitle")</PageTitle>
 <HeadContent>
-    <meta name="description" content="@T("Demo.Hero.Description")" />
+    <meta name="description" content="@T("Demo.Home.SeoDescription")" />
+    <link rel="canonical" href="@Navigation.BaseUri" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="@T("Demo.Hero.Title")" />
-    <meta property="og:description" content="@T("Demo.Hero.Description")" />
+    <meta property="og:site_name" content="BlazorKinetix" />
+    <meta property="og:url" content="@Navigation.BaseUri" />
+    <meta property="og:title" content="@T("Demo.Home.PageTitle")" />
+    <meta property="og:description" content="@T("Demo.Home.SeoDescription")" />
     <meta property="og:image" content="@BannerUrl" />
+    <meta property="og:image:alt" content="BlazorKinetix" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@T("Demo.Home.PageTitle")" />
+    <meta name="twitter:description" content="@T("Demo.Home.SeoDescription")" />
+    <meta name="twitter:image" content="@BannerUrl" />
 </HeadContent>
 <section class="hero">
     <div>
@@ -66,6 +73,18 @@
             <span class="eyebrow">@T("Demo.Input.Counter.Tag")</span><h3>@T("Demo.Input.Counter.Title")</h3><p>@T("Demo.Input.Counter.Description")</p>
             <InputBox TValue="string" Title="@T("Demo.Input.Counter.Label")" MaxLength="36" ShowCharacterCount="true" @bind-Value="note" />
             <button class="view-code" type="button" @onclick='() => ShowCode("counter")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Input.Integer.Tag")</span><h3>@T("Demo.Input.Integer.Title")</h3><p>@T("Demo.Input.Integer.Description")</p>
+            <InputBox TValue="int?" Kind="InputBoxKind.Integer" Title="@T("Demo.Input.Integer.Label")" HelpText="@T("Demo.Input.Numeric.Help")" @bind-Value="integerValue" />
+            <small class="card-status" role="status">@T("Demo.Input.Numeric.Accepted") @(integerValue?.ToString(System.Globalization.CultureInfo.CurrentCulture) ?? "—")</small>
+            <button class="view-code" type="button" @onclick='() => ShowCode("integer")'>@T("Demo.Code.View")</button>
+        </article>
+        <article class="card">
+            <span class="eyebrow">@T("Demo.Input.Decimal.Tag")</span><h3>@T("Demo.Input.Decimal.Title")</h3><p>@T("Demo.Input.Decimal.Description")</p>
+            <InputBox TValue="decimal?" Kind="InputBoxKind.Decimal" Title="@T("Demo.Input.Decimal.Label")" HelpText="@T("Demo.Input.Numeric.Help")" @bind-Value="decimalValue" />
+            <small class="card-status" role="status">@T("Demo.Input.Numeric.Accepted") @(decimalValue?.ToString(System.Globalization.CultureInfo.CurrentCulture) ?? "—")</small>
+            <button class="view-code" type="button" @onclick='() => ShowCode("decimal")'>@T("Demo.Code.View")</button>
         </article>
     </div>
 </section>
@@ -156,6 +175,8 @@
 
 @code {
     private string? name, email, heroEmail, promo, project, password, note;
+    private int? integerValue;
+    private decimal? decimalValue;
     private InputBox<string>? heroEmailInput;
     private string? heroFeedbackText;
     private bool codeOpen, detailsOpen;

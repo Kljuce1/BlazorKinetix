@@ -1,12 +1,14 @@
 @namespace BlazorKinetix.Components
 @typeparam TValue
-@implements IDisposable
+@implements IAsyncDisposable
 @using System.Globalization
 @using System.Linq.Expressions
 @using System.Net.Mail
 @using BlazorKinetix.Core
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
 @inject KinetixTexts Texts
+@inject IJSRuntime JS
 
 <div class="bk-input bk-input--@Appearance.ToString().ToLowerInvariant() bk-input--@Color.ToString().ToLowerInvariant() @(HasError ? "is-invalid" : "") @(Disabled ? "is-disabled" : "") @CssClass">
     @if (LabelMode == InputBoxLabelMode.Above && !string.IsNullOrWhiteSpace(Title))
@@ -32,7 +34,7 @@
             }
         </span>
     }
-    <input id="@inputId" name="@Name" type="@HtmlInputType" value="@rawText" placeholder="@(LabelMode == InputBoxLabelMode.Floating ? " " : Placeholder)"
+    <input @ref="inputElement" id="@inputId" name="@Name" type="@HtmlInputType" value="@rawText" placeholder="@(LabelMode == InputBoxLabelMode.Floating ? " " : Placeholder)"
            inputmode="@InputMode" autocomplete="@Autocomplete" maxlength="@MaxLength" minlength="@MinLength" required="@(NativeValidation && Required)" autofocus="@AutoFocus" disabled="@Disabled" readonly="@ReadOnly"
            aria-label="@(string.IsNullOrWhiteSpace(Title) ? Placeholder : null)" aria-required="@Required" aria-invalid="@HasError" aria-describedby="@DescriptionIds"
            @oninput="HandleInput" @onblur="HandleBlur" />
@@ -187,6 +189,11 @@
     [Parameter] public string? CssClass { get; set; }
 
     private readonly string generatedId = $"bk-input-{Guid.NewGuid():N}";
+    private ElementReference inputElement;
+    private IJSObjectReference? numericInputModule;
+    private InputBoxKind? configuredNumericKind;
+    private string? configuredNumericCulture;
+    private bool syncNumericInputValue = true;
     private string inputId = "", helpId = "", errorId = "", rawText = "";
     private string? localError, parseError;
     private TValue? observedValue;
@@ -212,6 +219,7 @@
             rawText = Convert.ToString(Value, CultureInfo.CurrentCulture) ?? "";
             observedValue = Value;
             initialized = true;
+            syncNumericInputValue = true;
         }
         if (subscribedContext != EditContext)
         {
@@ -237,6 +245,28 @@
 
     private void HandleBlur(FocusEventArgs _) { touched = true; Validate(); }
     private void TogglePassword() => passwordVisible = !passwordVisible;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Kind is not (InputBoxKind.Integer or InputBoxKind.Decimal))
+        {
+            if (configuredNumericKind is not null && numericInputModule is not null)
+                await numericInputModule.InvokeVoidAsync("dispose", inputElement);
+            configuredNumericKind = null;
+            return;
+        }
+
+        var numberFormat = CultureInfo.CurrentCulture.NumberFormat;
+        var cultureKey = $"{numberFormat.NumberDecimalSeparator}|{numberFormat.NegativeSign}|{numberFormat.PositiveSign}";
+        if (configuredNumericKind == Kind && configuredNumericCulture == cultureKey && !syncNumericInputValue) return;
+
+        numericInputModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/BlazorKinetix/input-box.js");
+        await numericInputModule.InvokeVoidAsync("configure", inputElement, Kind == InputBoxKind.Decimal,
+            numberFormat.NumberDecimalSeparator, numberFormat.NegativeSign, numberFormat.PositiveSign);
+        configuredNumericKind = Kind;
+        configuredNumericCulture = cultureKey;
+        syncNumericInputValue = false;
+    }
 
     /// <summary>Validates the current value and returns whether it is valid.</summary>
     public bool ValidateField() { touched = true; Validate(); _ = InvokeAsync(StateHasChanged); return !HasError; }
@@ -296,9 +326,9 @@
             return true;
         }
         if (string.IsNullOrWhiteSpace(text)) return true;
-        if (Kind == InputBoxKind.Integer && type == typeof(int) && int.TryParse(text, NumberStyles.Integer, CultureInfo.CurrentCulture, out var integer))
+        if (Kind == InputBoxKind.Integer && type == typeof(int) && int.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.CurrentCulture, out var integer))
         { result = (TValue?)(object)integer; return true; }
-        if (Kind == InputBoxKind.Decimal && type == typeof(decimal) && decimal.TryParse(text, NumberStyles.Number, CultureInfo.CurrentCulture, out var number))
+        if (Kind == InputBoxKind.Decimal && type == typeof(decimal) && decimal.TryParse(text, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.CurrentCulture, out var number))
         { result = (TValue?)(object)number; return true; }
         error = Message(Kind == InputBoxKind.Integer ? "Input.InvalidInteger" : "Input.InvalidDecimal");
         return false;
@@ -328,6 +358,14 @@
     }
     private int StrengthScore => Math.Clamp(rawText.Length * 4 + (rawText.Any(char.IsUpper) ? 15 : 0) + (rawText.Any(char.IsDigit) ? 15 : 0) + (rawText.Any(c => !char.IsLetterOrDigit(c)) ? 15 : 0), 0, 100);
     private string StrengthLabel => Texts.Get(StrengthScore switch { < 35 => "Input.Strength.Weak", < 70 => "Input.Strength.Fair", _ => "Input.Strength.Strong" });
-    public void Dispose() { if (subscribedContext is not null) subscribedContext.OnValidationRequested -= OnValidationRequested; }
+    public async ValueTask DisposeAsync()
+    {
+        if (subscribedContext is not null) subscribedContext.OnValidationRequested -= OnValidationRequested;
+        if (numericInputModule is not null)
+        {
+            try { await numericInputModule.InvokeVoidAsync("dispose", inputElement); await numericInputModule.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
+        }
+    }
 }
 
